@@ -16,16 +16,32 @@ relative-part = "//" authority path-abempty
               / path-noscheme
               / path-empty
 
-scheme        = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+scheme        = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) !!!
+  state = Map.put state, :scheme, scheme
+  {:ok, state}
+!!!
 
 authority     = [ userinfo "@" ] host [ ":" port ]
-userinfo      = *( unreserved / pct-encoded / sub-delims / ":" )
-host          = IP-literal / IPv4address / reg-name
-port          = *DIGIT
+userinfo      = *( unreserved / pct-encoded / sub-delims / ":" ) !!!
+  state = Map.put state, :userinfo, userinfo
+  {:ok, state}
+!!!
+
+host          = IP-literal / IPv4address / reg-name !!!
+  state = Map.put state, :host, host
+  {:ok, state}
+!!!
+port          = *DIGIT !!!
+  state = Map.put state, :port, port
+  {:ok, state}
+!!!
 
 IP-literal    = "[" ( IPv6address / IPvFuture  ) "]"
 
-IPvFuture     = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
+IPvFuture     = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" ) !!!
+  state = Map.put state, :host_type, :ipvfuture
+  {:ok, state}
+!!!
 
 IPv6address   =                            6( h16 ":" ) ls32
               /                       "::" 5( h16 ":" ) ls32
@@ -35,20 +51,33 @@ IPv6address   =                            6( h16 ":" ) ls32
               / [ *3( h16 ":" ) h16 ] "::"    h16 ":"   ls32
               / [ *4( h16 ":" ) h16 ] "::"              ls32
               / [ *5( h16 ":" ) h16 ] "::"              h16
-              / [ *6( h16 ":" ) h16 ] "::"
+              / [ *6( h16 ":" ) h16 ] "::" !!!
+  state = Map.put state, :host_type, :ipv6
+  {:ok, state}
+!!!
 
 h16           = 1*4HEXDIG
 ls32          = ( h16 ":" h16 ) / IPv4address
-IPv4address   = dec-octet "." dec-octet "." dec-octet "." dec-octet
+IPv4address =
+  dec-octet "."
+  dec-octet "."
+  dec-octet "."
+  dec-octet !!!
+  state = Map.put state, :host_type, :ipv4
+  {:ok, state}
+!!!
 
+dec-octet =
+  "25" %x30-35
+  / "2" %x30-34 DIGIT
+  / "1" 2DIGIT
+  / %x31-39 DIGIT
+  / DIGIT
 
-dec-octet     = DIGIT                 ; 0-9
-              / %x31-39 DIGIT         ; 10-99
-              / "1" 2DIGIT            ; 100-199
-              / "2" %x30-34 DIGIT     ; 200-249
-              / "25" %x30-35          ; 250-255
-
-reg-name      = *( unreserved / pct-encoded / sub-delims )
+reg-name      = *( unreserved / pct-encoded / sub-delims ) !!!
+  state = Map.put state, :host_type, :reg_name
+  {:ok, state}
+!!!
 
 path          = path-abempty    ; begins with "/" or is empty
               / path-absolute   ; begins with "/" but not "//"
@@ -56,22 +85,59 @@ path          = path-abempty    ; begins with "/" or is empty
               / path-rootless   ; begins with a segment
               / path-empty      ; zero characters
 
-path-abempty  = *( "/" segment )
-path-absolute = "/" [ segment-nz *( "/" segment ) ]
-path-noscheme = segment-nz-nc *( "/" segment )
-path-rootless = segment-nz *( "/" segment )
-path-empty    = 0<pchar>
+path-abempty  = *( "/" segment ) !!!
+  state = Map.put state, :type, :abempty
+  {:ok, state}
+!!!
 
-segment       = *pchar
-segment-nz    = 1*pchar
-segment-nz-nc = 1*( unreserved / pct-encoded / sub-delims / "@" )
+path-absolute = "/" [ segment-nz *( "/" segment ) ] !!!
+  state = Map.put state, :type, :absolute
+  {:ok, state}
+!!!
+
+path-noscheme = segment-nz-nc *( "/" segment ) !!!
+  state = Map.put state, :type, :noscheme
+  {:ok, state}
+!!!
+
+path-rootless = segment-nz *( "/" segment ) !!!
+  state = Map.put state, :type, :rootless
+  {:ok, state}
+!!!
+
+path-empty    = 0<pchar> !!!
+  state = Map.put state, :type, :empty)
+  {:ok, state}
+!!!
+
+segment       = *pchar !!!
+  segments = state.segments
+  state = Map.put state, :segments, Enum.reverse([segment|segments])
+  {:ok, state}
+!!!
+segment-nz    = 1*pchar !!!
+  segments = state.segments
+  state = Map.put state, :segments, Enum.reverse([segment_nz|segments])
+  {:ok, state}
+!!!
+segment-nz-nc = 1*( unreserved / pct-encoded / sub-delims / "@" ) !!!
+  segments = state.segments
+  state = Map.put state, :segments, Enum.reverse([segment_nz_nc|segments])
+  {:ok, state}
+!!!
               ; non-zero-length segment without any colon ":"
 
 pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
 
-query         = *( pchar / "/" / "?" )
+query         = *( pchar / "/" / "?" ) !!!
+  state = Map.put state, :query, query
+  {:ok, state}
+!!!
 
-fragment      = *( pchar / "/" / "?" )
+fragment      = *( pchar / "/" / "?" ) !!!
+  state = Map.put state, :fragment, fragment
+  {:ok, state}
+!!!
 
 pct-encoded   = "%" HEXDIG HEXDIG
 
@@ -80,3 +146,47 @@ reserved      = gen-delims / sub-delims
 gen-delims    = ":" / "/" / "?" / "#" / "[" / "]" / "@"
 sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"
               / "*" / "+" / "," / ";" / "="
+ALPHA          =  %x41-5A / %x61-7A   ; A-Z / a-z
+
+BIT            =  "0" / "1"
+
+CHAR           =  %x01-7F
+                       ; any 7-bit US-ASCII character,
+                       ;  excluding NUL
+
+CR             =  %x0D
+                       ; carriage return
+
+CRLF           =  CR LF
+                       ; Internet standard newline
+
+CTL            =  %x00-1F / %x7F
+                       ; controls
+
+DIGIT          =  %x30-39
+                       ; 0-9
+
+DQUOTE         =  %x22
+                       ; " (Double Quote)
+
+HEXDIG         =  DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
+
+HTAB           =  %x09
+                       ; horizontal tab
+
+LF             =  %x0A
+                       ; linefeed
+
+LWSP           =  *(WSP / CRLF WSP)
+                       ; linear white space (past newline)
+
+OCTET          =  %x00-FF
+                       ; 8 bits of data
+
+SP             =  %x20
+
+VCHAR          =  %x21-7E
+                       ; visible (printing) characters
+
+WSP            =  SP / HTAB
+                       ; white space
