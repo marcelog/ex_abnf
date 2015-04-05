@@ -2,7 +2,10 @@ IPv4address =
   dec-octet "."
   dec-octet "."
   dec-octet "."
-  dec-octet
+  dec-octet !!!
+    state = Map.put state, :ipv4address, ipv4address
+    {:ok, state}
+  !!!
 
 dec-octet =
   "25" %x30-35

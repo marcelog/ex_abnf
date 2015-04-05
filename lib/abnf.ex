@@ -1,5 +1,6 @@
 defmodule RFC4234.ABNF do
   alias RFC4234.Core, as: Core
+  alias RFC4234.Util, as: Util
 
   @type grammar :: Map
 
@@ -7,7 +8,8 @@ defmodule RFC4234.ABNF do
   @spec rulelist([byte]) :: Map
   def rulelist(input) do
     case rule input do
-      {{name, elements}, rest} -> rulelist_tail rest, (Map.put %{}, name, elements)
+      {{name, elements, reduce_code}, rest} ->
+        rulelist_tail rest, (Map.put %{}, name, %{elements: elements, code: reduce_code})
       _ ->
         {_wsps, rest} = c_wsps input
         case c_nl rest do
@@ -17,20 +19,33 @@ defmodule RFC4234.ABNF do
     end
   end
 
-  # rule = rulename defined-as elements c-nl
+  # rule = rulename defined-as elements [code] c-nl
   #  ; continues if next line starts with white space
-  def rule(input) do
+  defp rule(input) do
     case rulename input do
       {name, rest} -> case defined_as rest do
         {_defas, rest} -> case elements rest do
-          {e, rest} -> case c_nl rest do
-            {_c, rest} -> {{name.rulename, e.elements}, rest}
-            _ -> nil
-          end
+          {e, rest} ->
+            {reduce_code, rest} = case code rest do
+              nil -> {nil, rest}
+              r -> r
+            end
+            case c_nl rest do
+              {_c, rest} -> {{name.rulename, e.elements, reduce_code}, rest}
+              _ -> nil
+            end
           _ -> nil
         end
         _ -> nil
       end
+      _ -> nil
+    end
+  end
+
+  # !!! *OCTET !!! CRLF
+  defp code(input) do
+    case input do
+      [?!, ?!, ?!|rest] -> code_tail rest
       _ -> nil
     end
   end
@@ -323,13 +338,24 @@ defmodule RFC4234.ABNF do
   # ( rule / (*c-wsp c-nl) )
   defp rulelist_tail(input, acc) do
     case rule input do
-      {{name, value}, rest} -> rulelist_tail rest, Map.put(acc, name, value)
+      {{name, value, reduce_code}, rest} ->
+        rulelist_tail rest, (Map.put acc, name, %{elements: value, code: reduce_code})
       _ ->
         {_wsps, rest} = c_wsps input
         case c_nl rest do
           {_c, rest} -> rulelist_tail rest, acc
           _ -> {token(:rulelist, acc), input}
         end
+    end
+  end
+
+  # *OCTET --- CRLF
+  defp code_tail(input, acc \\ '') do
+    case input do
+      [?!, ?!, ?!, 13, 10|rest] -> {to_string(Enum.reverse(acc)), [13, 10|rest]}
+      [?!, ?!, ?!, 10|rest] -> {to_string(Enum.reverse(acc)), [10|rest]}
+      [char|rest] -> code_tail rest, [char|acc]
+      _ -> nil
     end
   end
 
@@ -342,11 +368,11 @@ defmodule RFC4234.ABNF do
       [char|rest] -> if (Core.alpha? char) or (Core.digit? char) or (char === ?-) do
         rulename_tail rest, [char|acc]
       else
-        n = String.downcase(to_string(Enum.reverse(acc)))
+        n = Util.normalize_rule_name Enum.reverse(acc)
         {token(:rulename, n), input}
       end
       _ ->
-        n = String.downcase(to_string(Enum.reverse(acc)))
+        n = Util.normalize_rule_name Enum.reverse(acc)
         {token(:rulename, n), input}
     end
   end
@@ -382,12 +408,12 @@ defmodule RFC4234.ABNF do
       else
         case acc do
           '' -> nil
-          _ -> {to_num(Enum.reverse(acc)), input}
+          _ -> {Util.to_num(Enum.reverse(acc)), input}
         end
       end
       _ -> case acc do
         '' -> nil
-        _ -> {to_num(Enum.reverse(acc)), input}
+        _ -> {Util.to_num(Enum.reverse(acc)), input}
       end
     end
   end
@@ -397,19 +423,19 @@ defmodule RFC4234.ABNF do
       [?., digit|rest] -> if digit? digit, base do
         num_concat_tail rest, base, [digit], [acc]
       else
-        {token(token_value(base), to_num(Enum.reverse(acc), base)), input}
+        {token(token_value(base), Util.to_num(Enum.reverse(acc), base)), input}
       end
       [?-, digit|rest] -> if digit? digit, base do
         num_range_tail rest, base, [digit], acc
       else
-        {token(token_value(base), to_num(Enum.reverse(acc), base)), input}
+        {token(token_value(base), Util.to_num(Enum.reverse(acc), base)), input}
       end
       [digit|rest] -> if digit? digit, base do
         num_val_tail rest, base, [digit|acc]
       else
-        {token(token_value(base), to_num(Enum.reverse(acc), base)), input}
+        {token(token_value(base), Util.to_num(Enum.reverse(acc), base)), input}
       end
-      _ -> {token(token_value(base), to_num(Enum.reverse(acc), base)), input}
+      _ -> {token(token_value(base), Util.to_num(Enum.reverse(acc), base)), input}
     end
   end
 
@@ -421,7 +447,7 @@ defmodule RFC4234.ABNF do
       num_concat_tail rest, base, [digit], [current_num_acc|nums_so_far_acc]
     else
       new_acc = Enum.reverse([current_num_acc|nums_so_far_acc])
-      nums = for n <- new_acc, do: to_num(Enum.reverse(n), base)
+      nums = for n <- new_acc, do: Util.to_num(Enum.reverse(n), base)
       {token(token_concat(base), nums), input}
     end
   end
@@ -431,14 +457,14 @@ defmodule RFC4234.ABNF do
       num_concat_tail rest, base, [digit|current_num_acc], nums_so_far_acc
     else
       new_acc = Enum.reverse([current_num_acc|nums_so_far_acc])
-      nums = for n <- new_acc, do: to_num(Enum.reverse(n), base)
+      nums = for n <- new_acc, do: Util.to_num(Enum.reverse(n), base)
       {token(token_concat(base), nums), input}
     end
   end
 
   defp num_concat_tail(input, base, current_num_acc, nums_so_far_acc) do
     new_acc = Enum.reverse([current_num_acc|nums_so_far_acc])
-    nums = for n <- new_acc, do: to_num(Enum.reverse(n), base)
+    nums = for n <- new_acc, do: Util.to_num(Enum.reverse(n), base)
     {token(token_concat(base), nums), input}
   end
 
@@ -447,15 +473,15 @@ defmodule RFC4234.ABNF do
     if digit? digit, base do
       num_range_tail rest, base, [digit|max], min
     else
-      max = to_num Enum.reverse(max), base
-      min = to_num Enum.reverse(min), base
+      max = Util.to_num Enum.reverse(max), base
+      min = Util.to_num Enum.reverse(min), base
       {token(token_range(base), {min, max}), input}
     end
   end
 
   defp num_range_tail(input, base, max, min) do
-    max = to_num Enum.reverse(max), base
-    min = to_num Enum.reverse(min), base
+    max = Util.to_num Enum.reverse(max), base
+    min = Util.to_num Enum.reverse(min), base
     {token(token_range(base), {min, max}), input}
   end
 
@@ -548,13 +574,5 @@ defmodule RFC4234.ABNF do
     end
   end
 
-  defp to_num(char_list, base \\ 10)
 
-  defp to_num(char_list, base) when is_list(char_list) do
-    to_num to_string(char_list), base
-  end
-
-  defp to_num(string, base) when is_binary(string) do
-    String.to_integer string, base
-  end
 end

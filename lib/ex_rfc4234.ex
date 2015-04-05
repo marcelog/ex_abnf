@@ -30,8 +30,8 @@ defmodule RFC4234 do
   @doc """
   Parses an input given a gramar, looking for the given rule.
   """
-  @spec apply(ABNF.grammar, String.t, [byte]) :: ABNF.result
-  def apply(grammar, rule, input) do
-    Interpreter.run grammar, rule, input
+  @spec apply(ABNF.grammar, String.t, [byte], term) :: ABNF.result
+  def apply(grammar, rule, input, state \\ nil) do
+    Interpreter.run grammar, rule, input, state
   end
 end
