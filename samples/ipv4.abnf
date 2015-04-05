@@ -1,0 +1,14 @@
+IPv4address =
+  dec-octet "."
+  dec-octet "."
+  dec-octet "."
+  dec-octet
+
+dec-octet =
+  "25" %x30-35
+  / "2" %x30-34 DIGIT
+  / "1" 2DIGIT
+  / %x31-39 DIGIT
+  / DIGIT
+
+DIGIT = %x30-39
