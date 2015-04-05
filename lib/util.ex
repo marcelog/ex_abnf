@@ -1,4 +1,4 @@
-defmodule RFC4234.Util do
+defmodule ABNF.Util do
   @moduledoc """
   Miscelaneous utilities.
   """
@@ -9,7 +9,7 @@ defmodule RFC4234.Util do
 
   ## Examples:
 
-      iex> RFC4234.Util.normalize_rule_name 'Arule-NaME'
+      iex> ABNF.Util.normalize_rule_name 'Arule-NaME'
       "arule_name"
   """
   @spec normalize_rule_name(String.t | [byte]) :: String.t
@@ -26,10 +26,10 @@ defmodule RFC4234.Util do
 
   ## Examples:
 
-      iex> RFC4234.Util.to_num '10'
+      iex> ABNF.Util.to_num '10'
       10
 
-      iex> RFC4234.Util.to_num "10", 16
+      iex> ABNF.Util.to_num "10", 16
       16
   """
   def to_num(char_list, base \\ 10)

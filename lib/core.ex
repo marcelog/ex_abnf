@@ -1,4 +1,4 @@
-defmodule RFC4234.Core do
+defmodule ABNF.Core do
   @moduledoc """
   This module includes the core rules (Appendix B).
   """

@@ -1,5 +1,5 @@
-defmodule RFC4234.Interpreter do
-  alias RFC4234.Util, as: Util
+defmodule ABNF.Interpreter do
+  alias ABNF.Util, as: Util
 
   @moduledoc """
   Parser functions for the abnf rules.

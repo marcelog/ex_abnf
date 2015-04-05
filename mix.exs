@@ -1,8 +1,8 @@
-defmodule RFC4234.Mixfile do
+defmodule ABNF.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :ex_rfc4234,
+    [app: :ex_abnf,
      version: "0.0.1",
      elixir: "~> 1.1-dev",
      deps: deps]

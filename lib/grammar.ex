@@ -1,6 +1,6 @@
-defmodule RFC4234.ABNF do
-  alias RFC4234.Core, as: Core
-  alias RFC4234.Util, as: Util
+defmodule ABNF.Grammar do
+  alias ABNF.Core, as: Core
+  alias ABNF.Util, as: Util
 
   @type grammar :: Map
 
