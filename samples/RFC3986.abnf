@@ -106,7 +106,7 @@ path-rootless = segment-nz *( "/" segment ) !!!
 !!!
 
 path-empty    = 0<pchar> !!!
-  state = Map.put state, :type, :empty)
+  state = Map.put state, :type, :empty
   {:ok, state}
 !!!
 
