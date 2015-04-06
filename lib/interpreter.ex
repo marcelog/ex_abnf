@@ -136,10 +136,11 @@ defmodule ABNF.Interpreter do
   end
 
   defp element(grammar, input, state, %{option: concs}) do
-    case run_tail grammar, input, state, concs do
-      nil -> {'', input, state}
-      r -> r
-    end
+    run_tail grammar, input, state, concs
+  end
+
+  defp element(grammar, input, state, %{prose: rule}) do
+    run grammar, rule, input, state
   end
 
   defp char_val(input, state, string) do
@@ -172,13 +173,13 @@ defmodule ABNF.Interpreter do
     nil
   end
 
-  defp num_concat(input, '', state, acc) do
+  defp num_concat(input, state, '', acc) do
     {Enum.reverse(acc), input, state}
   end
 
   defp num_concat(input, state, [char|rest2], acc) do
     case input do
-      [^char|rest1] -> num_concat rest1, rest2, [char|acc]
+      [^char|rest1] -> num_concat rest1, state, rest2, [char|acc]
       _ -> nil
     end
   end
