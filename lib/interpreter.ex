@@ -129,10 +129,7 @@ defmodule ABNF.Interpreter do
   end
 
   defp element(grammar, input, state, %{group: concs}) do
-    case run_tail grammar, input, state, concs do
-      nil -> nil
-      r -> r
-    end
+    run_tail grammar, input, state, concs
   end
 
   defp element(grammar, input, state, %{option: concs}) do
