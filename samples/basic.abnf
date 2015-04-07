@@ -1,0 +1,8 @@
+ALPHA          =  %x41-5A / %x61-7A   ; A-Z / a-z
+DIGIT          =  %x30-39
+
+string1 = *ALPHA
+string2 = *3ALPHA
+string3 = 1*2ALPHA
+string4 = 3*ALPHA
+string5 = [DIGIT] string1

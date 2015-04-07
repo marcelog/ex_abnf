@@ -5,6 +5,30 @@ defmodule ABNF_Test do
   alias ABNF
   require Logger
 
+  test "basic repetition and optional" do
+    grammar = ABNF.load_file "samples/basic.abnf"
+    {'helloworld', ' rest', nil} =
+      ABNF.apply grammar, "string1", 'helloworld rest', nil
+
+    {'hel', 'loworld rest', nil} =
+      ABNF.apply grammar, "string2", 'helloworld rest', nil
+
+    {'he', 'lloworld rest', nil} =
+      ABNF.apply grammar, "string3", 'helloworld rest', nil
+
+    {'helloworld', ' rest', nil} =
+      ABNF.apply grammar, "string4", 'helloworld rest', nil
+
+    {'3helloworld', ' rest', nil} =
+      ABNF.apply grammar, "string5", '3helloworld rest', nil
+
+    {'3helloworld', ' rest', nil} =
+      ABNF.apply grammar, "string5", '3helloworld rest', nil
+
+    {'helloworld', ' rest', nil} =
+      ABNF.apply grammar, "string5", 'helloworld rest', nil
+  end
+
   test "ipv4" do
     grammar = ABNF.load_file "samples/ipv4.abnf"
 
@@ -38,5 +62,6 @@ defmodule ABNF_Test do
         type: :abempty
       }
     } = ABNF.apply grammar, "uri", url, %{segments: []}
+
   end
 end
