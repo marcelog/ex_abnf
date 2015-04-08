@@ -104,5 +104,27 @@ defmodule ABNF_Test do
         type: :abempty
       }
     } = ABNF.apply grammar, "uri", url, %{segments: []}
+
+    url = 'http:'
+    {
+      'http:',
+      [],
+      %{
+        scheme: 'http',
+        segments: [],
+        type: :empty
+      }
+    } = ABNF.apply grammar, "uri", url, %{segments: []}
+
+    url = 'http:path1/path2'
+    {
+      'http:path1/path2',
+      [],
+      %{
+        scheme: 'http',
+        segments: ['path1', 'path2'],
+        type: :rootless
+      }
+    } = ABNF.apply grammar, "uri", url, %{segments: []}
   end
 end
