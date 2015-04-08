@@ -53,12 +53,11 @@ defmodule ABNF.Interpreter do
   end
 
   defp concatenations(grammar, input, state, [c|concs], acc) do
-    r = case concatenation grammar, input, state, c do
+    case concatenation grammar, input, state, c do
       {match, rest, state} ->
         concatenations grammar, rest, state, concs, [match|acc]
       _ -> nil
     end
-    r
   end
 
   defp concatenation(grammar, input, state, %{repetition: %{element: e, repeat: r}}) do

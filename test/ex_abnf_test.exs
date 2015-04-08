@@ -12,6 +12,9 @@ defmodule ABNF_Test do
 
     {'/a', '', ['a']} =
       ABNF.apply grammar, "path", '/a', []
+
+    {'/aa/bb', '', ['aa', 'bb']} =
+      ABNF.apply grammar, "path", '/aa/bb', []
   end
 
   test "basic repetition and optional" do
