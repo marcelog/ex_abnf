@@ -193,7 +193,7 @@ defmodule ABNF.Grammar do
       r -> r
     end
     case element rest do
-      {%{option: o}, rest} -> {token(:repetition, %{repeat: %{from: 0, to: 1}, element: %{option: g}}), rest}
+      {%{option: o}, rest} -> {token(:repetition, %{repeat: %{from: 0, to: 1}, element: %{option: o}}), rest}
       {e, rest} -> {token(:repetition, %{repeat: r, element: e}), rest}
       nil -> nil
     end
