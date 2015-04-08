@@ -183,4 +183,39 @@ defmodule ABNF_Test do
       }
     } = ABNF.apply grammar, "uri", url, %{segments: []}
   end
+
+  test "email" do
+    grammar = ABNF.load_file "samples/RFC5322.abnf"
+    {'user@domain.com', '', %{
+      domain: 'domain.com',
+      local_part: 'user'
+    }} = ABNF.apply grammar, "mailbox", 'user@domain.com', %{}
+
+    {'<user@domain.com>', '', %{
+      domain: 'domain.com',
+      local_part: 'user'
+    }} = ABNF.apply grammar, "mailbox", '<user@domain.com>', %{}
+
+    {'Peter Cantropus <user@domain.com>', '', %{
+      domain: 'domain.com',
+      local_part: 'user',
+      display_name: 'Peter Cantropus '
+    }} = ABNF.apply grammar, "mailbox", 'Peter Cantropus <user@domain.com>', %{}
+
+    {'Peter Cantropus <user@domain.com>', '', %{
+      domain: 'domain.com',
+      local_part: 'user',
+      display_name: 'Peter Cantropus '
+    }} = ABNF.apply grammar, "mailbox", 'Peter Cantropus <user@domain.com>', %{}
+
+    {'21 Nov 1997 10:01:22 -0600', '', %{
+      month: 'Nov',
+      year: ' 1997 ',
+      day: '21 ',
+      tz: ' -0600',
+      hour: '10',
+      minute: '01',
+      second: '22'
+    }} = ABNF.apply grammar, "date_time", '21 Nov 1997 10:01:22 -0600', %{}
+  end
 end
