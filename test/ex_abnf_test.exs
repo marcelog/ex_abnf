@@ -59,7 +59,18 @@ defmodule ABNF_Test do
   test "ipv6" do
     grammar = ABNF.load_file "samples/ipv6.abnf"
 
-    {'::', 'rest', %{}} = ABNF.apply grammar, "ipv6address", '::rest', %{}
+    addresses = [
+      '::',
+      '1:2:3:4:5:6:7:8',
+      'FE80:0000:0000:0000:0202:B3FF:FE1E:8329',
+      '::1'
+    ]
+
+    Enum.each addresses, fn(a) ->
+      Logger.debug "Testing IPv6: #{inspect a}"
+      {^a, 'rest', %{}} = ABNF.apply grammar, "ipv6address", a ++ 'rest', %{}
+    end
+
   end
 
   test "uri" do
