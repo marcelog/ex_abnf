@@ -29,10 +29,13 @@ defmodule ABNF.Interpreter do
     end
   end
 
+  # No more concats, then the rule doesn't match.
   defp run_tail(_grammar, _input, _state, []) do
     nil
   end
 
+  # Each concat MUST match and in order. Each concat means different paths,
+  # i.e: concat1 / concat2 / concat3. This is an alternation.
   defp run_tail(grammar, input, state, [%{concatenation: c}|concs]) do
     case concatenations grammar, input, state, c do
       nil -> run_tail grammar, input, state, concs
@@ -43,7 +46,6 @@ defmodule ABNF.Interpreter do
   defp concatenations(grammar, input, state, concs) do
     concatenations grammar, input, state, concs, []
   end
-
 
   defp concatenations(_grammar, input, state, [], acc) do
     {:lists.flatten(Enum.reverse(acc)), input, state}
@@ -62,6 +64,7 @@ defmodule ABNF.Interpreter do
     end
   end
 
+  # Every concatenation is wrapped into a repetition.
   defp concatenation(grammar, input, state, %{repetition: %{element: e, repeat: r}}) do
     repetition grammar, input, state, e, r.from, r.to, []
   end
