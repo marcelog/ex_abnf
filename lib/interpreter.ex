@@ -75,7 +75,7 @@ defmodule ABNF.Interpreter do
         else
           repetition grammar, rest, state, e, from, to, acc
         end
-      _ -> if(length(acc) > from) do
+      _ -> if(length(acc) >= from) do
         {:lists.flatten(Enum.reverse(acc)), input, state}
       else
         nil

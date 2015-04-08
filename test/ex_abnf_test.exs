@@ -153,5 +153,19 @@ defmodule ABNF_Test do
         type: :rootless
       }
     } = ABNF.apply grammar, "uri", url, %{segments: []}
+
+
+    url = 'http://[v1.fe80::a+en1]/path'
+    {
+      'http://[v1.fe80::a+en1]/path',
+      [],
+      %{
+        scheme: 'http',
+        host: '[v1.fe80::a+en1]',
+        host_type: :ipvfuture,
+        segments: ['path'],
+        type: :abempty
+      }
+    } = ABNF.apply grammar, "uri", url, %{segments: []}
   end
 end
