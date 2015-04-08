@@ -29,10 +29,6 @@ defmodule ABNF.Interpreter do
     end
   end
 
-  defp run_tail(_grammar, '', _state, _concs) do
-    nil
-  end
-
   defp run_tail(_grammar, _input, _state, []) do
     nil
   end
@@ -48,7 +44,8 @@ defmodule ABNF.Interpreter do
     concatenations grammar, input, state, concs, []
   end
 
-  defp concatenations(_grammar, input, state, '', acc) do
+
+  defp concatenations(_grammar, input, state, [], acc) do
     {:lists.flatten(Enum.reverse(acc)), input, state}
   end
 
@@ -56,19 +53,17 @@ defmodule ABNF.Interpreter do
     case concatenation grammar, input, state, c do
       {match, rest, state} ->
         concatenations grammar, rest, state, concs, [match|acc]
-      _ -> nil
+      _ ->
+        if c.repetition.repeat.from === 0 do
+          concatenations grammar, input, state, concs, acc
+        else
+          nil
+        end
     end
   end
 
   defp concatenation(grammar, input, state, %{repetition: %{element: e, repeat: r}}) do
-    case repetition grammar, input, state, e, r.from, r.to, [] do
-      nil -> if r.from === 0 do
-        {'', input, state}
-      else
-        nil
-      end
-      result -> result
-    end
+    repetition grammar, input, state, e, r.from, r.to, []
   end
 
   defp repetition(grammar, input, state, e, from, to, acc) do

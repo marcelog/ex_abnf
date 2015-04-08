@@ -56,6 +56,12 @@ defmodule ABNF_Test do
     nil = ABNF.apply grammar, "ipv4address", '255.255.256.255rest', %{}
   end
 
+  test "ipv6" do
+    grammar = ABNF.load_file "samples/ipv6.abnf"
+
+    {'::', 'rest', %{}} = ABNF.apply grammar, "ipv6address", '::rest', %{}
+  end
+
   test "uri" do
     grammar = ABNF.load_file "samples/RFC3986.abnf"
     url = 'http://user:pass@host.com:421/some/path?k1=v1&k2=v2#one_fragment'
@@ -86,5 +92,17 @@ defmodule ABNF_Test do
       }
     } = ABNF.apply grammar, "uri", url, %{segments: []}
 
+    url = 'http://a.com'
+    {
+      'http://a.com',
+      [],
+      %{
+        scheme: 'http',
+        host: 'a.com',
+        host_type: :reg_name,
+        segments: [],
+        type: :abempty
+      }
+    } = ABNF.apply grammar, "uri", url, %{segments: []}
   end
 end
