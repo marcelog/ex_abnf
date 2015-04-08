@@ -105,6 +105,33 @@ defmodule ABNF_Test do
       }
     } = ABNF.apply grammar, "uri", url, %{segments: []}
 
+    url = 'http://a.com:789'
+    {
+      'http://a.com:789',
+      [],
+      %{
+        scheme: 'http',
+        host: 'a.com',
+        port: '789',
+        host_type: :reg_name,
+        segments: [],
+        type: :abempty
+      }
+    } = ABNF.apply grammar, "uri", url, %{segments: []}
+
+    url = 'http://192.168.0.1/path'
+    {
+      'http://192.168.0.1/path',
+      [],
+      %{
+        scheme: 'http',
+        host: '192.168.0.1',
+        host_type: :ipv4,
+        segments: ['path'],
+        type: :abempty
+      }
+    } = ABNF.apply grammar, "uri", url, %{segments: []}
+
     url = 'http:'
     {
       'http:',
