@@ -5,6 +5,15 @@ defmodule ABNF_Test do
   alias ABNF
   require Logger
 
+  test "medium complexity" do
+    grammar = ABNF.load_file "samples/path.abnf"
+    {'segment', '', ['segment']} =
+      ABNF.apply grammar, "segment", 'segment', []
+
+    {'/a', '', ['a']} =
+      ABNF.apply grammar, "path", '/a', []
+  end
+
   test "basic repetition and optional" do
     grammar = ABNF.load_file "samples/basic.abnf"
     {'helloworld', ' rest', nil} =
@@ -60,6 +69,17 @@ defmodule ABNF_Test do
         userinfo: 'user:pass',
         segments: ['some', 'path'],
         type: :abempty
+      }
+    } = ABNF.apply grammar, "uri", url, %{segments: []}
+
+    url = 'http:/path'
+    {
+      'http:/path',
+      [],
+      %{
+        scheme: 'http',
+        segments: ['path'],
+        type: :absolute
       }
     } = ABNF.apply grammar, "uri", url, %{segments: []}
 
