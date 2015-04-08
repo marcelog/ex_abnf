@@ -189,7 +189,7 @@ defmodule ABNF.Grammar do
   # repetition     =  [repeat] element
   defp repetition(input) do
     {r, rest} = case repeat input do
-      nil -> {%{from: 0, to: 1}, input}
+      nil -> {%{from: 1, to: 1}, input}
       r -> r
     end
     case element rest do
