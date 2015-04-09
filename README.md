@@ -13,7 +13,7 @@ which is updated in [https://tools.ietf.org/html/rfc5234](https://tools.ietf.org
 ## More complex examples
 
 The [unit tests](https://github.com/marcelog/ex_abnf/blob/master/test/ex_abnf_test.exs)
-use different [RFCs](https://github.com/marcelog/ex_abnf/tree/master/samples) to test the
+use different [sample RFCs](https://github.com/marcelog/ex_abnf/tree/master/samples) to test the
 [grammar parser](https://github.com/marcelog/ex_abnf/blob/master/lib/grammar.ex) and
 [the interpreter](https://github.com/marcelog/ex_abnf/blob/master/lib/interpreter.ex)
 
