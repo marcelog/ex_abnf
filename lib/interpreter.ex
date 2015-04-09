@@ -13,6 +13,9 @@ defmodule ABNF.Interpreter do
   def run(grammar, rule, input, state) do
     rule = Util.normalize_rule_name rule
     v = Map.get(grammar, rule)
+    if v === nil do
+      throw {:invalid_rule, rule}
+    end
     case run_tail grammar, input, state, v.elements do
       r = {match, rest, state} ->
         if(v.code !== nil) do
@@ -36,10 +39,20 @@ defmodule ABNF.Interpreter do
 
   # Each concat MUST match and in order. Each concat means different paths,
   # i.e: concat1 / concat2 / concat3. This is an alternation.
-  defp run_tail(grammar, input, state, [%{concatenation: c}|concs]) do
-    case concatenations grammar, input, state, c do
-      nil -> run_tail grammar, input, state, concs
-      r -> r
+  defp run_tail(grammar, input, state, cs) do
+    Enum.reduce cs, nil, fn(%{concatenation: c}, acc) ->
+      case concatenations grammar, input, state, c do
+        nil -> acc
+        r = {match, rest, state} -> case acc do
+          nil -> r
+          {last_match, last_rest, last_state} ->
+            if length(match) > length(last_match) do
+              r
+            else
+              acc
+            end
+        end
+      end
     end
   end
 

@@ -185,7 +185,8 @@ defmodule ABNF_Test do
   end
 
   test "email" do
-    grammar = ABNF.load_file "samples/RFC5322.abnf"
+    grammar = ABNF.load_file "samples/RFC5322-no-obs.abnf"
+
     {'user@domain.com', '', %{
       domain: 'domain.com',
       local_part: 'user'
@@ -217,5 +218,16 @@ defmodule ABNF_Test do
       minute: '01',
       second: '22'
     }} = ABNF.apply grammar, "date_time", '21 Nov 1997 10:01:22 -0600', %{}
+
+    {'Received: from node.example by x.y.test; 21 Nov 1997 10:01:22 -0600\r\n', '', %{
+      day: ' 21 ',
+      domain: 'x.y.test',
+      hour: '10',
+      minute: '01',
+      month: 'Nov',
+      second: '22',
+      tz: ' -0600',
+      year: ' 1997 '
+    }} = ABNF.apply grammar, "Received", 'Received: from node.example by x.y.test; 21 Nov 1997 10:01:22 -0600\r\n', %{}
   end
 end
