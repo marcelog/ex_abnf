@@ -43,9 +43,9 @@ defmodule ABNF.Interpreter do
     Enum.reduce cs, nil, fn(%{concatenation: c}, acc) ->
       case concatenations grammar, input, state, c do
         nil -> acc
-        r = {match, rest, state} -> case acc do
+        r = {match, _rest, _state} -> case acc do
           nil -> r
-          {last_match, last_rest, last_state} ->
+          {last_match, _last_rest, _last_state} ->
             if length(match) > length(last_match) do
               r
             else
