@@ -1,5 +1,6 @@
 defmodule ABNF.Interpreter do
   alias ABNF.Util, as: Util
+  require Logger
 
   @moduledoc """
   Parser functions for the abnf rules.
@@ -66,16 +67,16 @@ defmodule ABNF.Interpreter do
     {:lists.flatten(Enum.reverse(acc)), input, state}
   end
 
-  defp concatenations(grammar, input, state, [c|concs], acc) do
+  defp concatenations(grammar, input, state, [c|concs], acc, bt \\ 1) do
     case concatenation grammar, input, state, c do
       {match, rest, new_state} ->
         case concs do
           [c2|_next_concs] ->
             case concatenation grammar, rest, new_state, c2 do
-              nil -> if (length(match) - 1) > c.repetition.repeat.from do
-                [last_one|right_matches] = match
+              nil -> if (length(match) - bt) >= c.repetition.repeat.from do
+                [last_one|right_matches] = Enum.slice match, (bt - 1), length(match)
                 concatenations(
-                  grammar, (last_one ++ rest), state, concs, (right_matches ++ acc)
+                  grammar, (last_one ++ rest), state, concs, (right_matches ++ acc), (bt + 1)
                 )
               else
                 concatenations(
