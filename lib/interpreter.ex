@@ -40,6 +40,8 @@ defmodule ABNF.Interpreter do
   # Each concat MUST match and in order. Each concat means different paths,
   # i.e: concat1 / concat2 / concat3. This is an alternation.
   defp run_tail(grammar, input, state, cs) do
+    # We run all concatenations, and then choose by the longest match in the
+    # best possible ugly way :\
     Enum.reduce cs, nil, fn(%{concatenation: c}, acc) ->
       case concatenations grammar, input, state, c do
         nil -> acc
