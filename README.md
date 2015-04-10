@@ -23,5 +23,22 @@ and generate an (kind of) [AST](http://en.wikipedia.org/wiki/Abstract_syntax_tre
 you can apply any of the rules to an input and the interpreter will parse the input according to
 the rule.
 
+## Using it with Mix
+
+To use it in your Mix projects, first add it as a dependency:
+
+```elixir
+def deps do
+  [{:ex_abnf, "~> 0.1.0"}]
+end
+```
+
+Then run mix deps.get to install it.
+
 ## TODO
  * Implement [RFC7405](https://tools.ietf.org/html/rfc7405)
+
+## License
+The source code is released under Apache 2 License.
+
+Check [LICENSE](https://github.com/marcelog/ex_abnf/blob/master/LICENSE) file for more information.
