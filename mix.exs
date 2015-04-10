@@ -3,28 +3,36 @@ defmodule ABNF.Mixfile do
 
   def project do
     [app: :ex_abnf,
-     version: "0.0.1",
+     version: "0.1.0",
      elixir: "~> 1.1-dev",
+     description: description,
+     package: package,
      deps: deps]
   end
 
-  # Configuration for the OTP application
-  #
-  # Type `mix help compile.app` for more information
   def application do
     [applications: [:logger]]
   end
 
-  # Dependencies can be Hex packages:
-  #
-  #   {:mydep, "~> 0.3.0"}
-  #
-  # Or git/path repositories:
-  #
-  #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
-  #
-  # Type `mix help deps` for more examples and options
   defp deps do
     []
+  end
+
+  defp description do
+    """
+    A parser and interpreter for ABNF grammars. This is not a parser generator, but an interpreter.
+    It will load up an ABNF grammar, and generate an AST for it. Then one can apply any of the rules to an input and the interpreter will parse the input according to the rule.
+    """
+  end
+
+  defp package do
+    [
+      files: ["lib", "mix.exs", "README*", "LICENSE*"],
+      contributors: ["Marcelo Gornstein"],
+      licenses: ["Apache 2.0"],
+      links: %{
+        "GitHub" => "https://github.com/marcelog/ex_abnf"
+      }
+    ]
   end
 end
