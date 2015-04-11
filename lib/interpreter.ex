@@ -15,7 +15,6 @@
 ################################################################################
 defmodule ABNF.Interpreter do
   alias ABNF.Util, as: Util
-  require Logger
 
   @moduledoc """
   Parser functions for the abnf rules.
