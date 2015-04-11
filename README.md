@@ -32,8 +32,22 @@ def deps do
   [{:ex_abnf, "~> 0.1.0"}]
 end
 ```
-
 Then run mix deps.get to install it.
+
+## Adding custom code to reduce rules
+After a rule, you can add your own code, for example:
+```
+userinfo      = *( unreserved / pct-encoded / sub-delims / ":" ) !!!
+  state = Map.put state, :userinfo, userinfo
+  {:ok, state}
+!!!
+```
+
+Your code will be called with a binding called *state* and another one called like
+the rule that matched, and should return either **{:ok, state}** or **{:error, state}**. In
+the last case, the full grammar will be aborted and that error will be thrown.
+
+**NOTE**: All rules are lowercased and all dashes are replaced with "_".
 
 ## TODO
  * Implement [RFC7405](https://tools.ietf.org/html/rfc7405)
