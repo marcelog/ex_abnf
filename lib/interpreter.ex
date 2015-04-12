@@ -129,7 +129,11 @@ defmodule ABNF.Interpreter do
         if(length(acc) === to) do
           {acc, rest, state}
         else
-          repetition grammar, rest, state, e, from, to, acc
+          if (match === '' and from === 0) do
+            nil
+          else
+            repetition grammar, rest, state, e, from, to, acc
+          end
         end
       _ -> if(length(acc) >= from) do
         {acc, input, state}

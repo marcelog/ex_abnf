@@ -21,6 +21,10 @@ defmodule ABNF_Test do
   require Logger
 
   test "sdp" do
+    grammar = ABNF.load_file "samples/RFC4566.abnf"
+    data = to_char_list(File.read! "test/resources/sdp1.txt")
+    {^data, '', nil} =
+      ABNF.apply grammar, "session-description", data, nil
   end
 
   test "medium complexity" do
