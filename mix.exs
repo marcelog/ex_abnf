@@ -5,7 +5,7 @@ defmodule ABNF.Mixfile do
     [app: :ex_abnf,
      name: "ex_abnf",
      source_url: "https://github.com/marcelog/ex_abnf",
-     version: "0.1.0",
+     version: "0.1.1",
      elixir: "~> 1.1-dev",
      description: description,
      package: package,
@@ -32,7 +32,7 @@ defmodule ABNF.Mixfile do
 
   defp package do
     [
-      files: ["lib", "mix.exs", "README*", "LICENSE*"],
+      files: ["lib", "mix.exs", "README*", "LICENSE*", "samples"],
       contributors: ["Marcelo Gornstein"],
       licenses: ["Apache 2.0"],
       links: %{
