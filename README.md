@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/marcelog/ex_abnf.svg)](https://travis-ci.org/marcelog/ex_abnf)
+
 ## About
 
 A parser and interpreter for ABNF grammars. ABNF is defined in:
