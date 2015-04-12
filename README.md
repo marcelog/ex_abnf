@@ -49,7 +49,9 @@ Your code will be called with a binding called *state* and another one called li
 the rule that matched, and should return either **{:ok, state}** or **{:error, state}**. In
 the last case, the full grammar will be aborted and that error will be thrown.
 
-**NOTE**: All rules are lowercased and all dashes are replaced with "_".
+**NOTE**: All rules are lowercased and all dashes are replaced with "_". See
+[this example](https://github.com/marcelog/ex_abnf/blob/master/samples/RFC3986.abnf#L76) for
+more details.
 
 ## TODO
  * Implement [RFC7405](https://tools.ietf.org/html/rfc7405)
