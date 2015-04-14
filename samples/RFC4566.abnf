@@ -12,13 +12,44 @@ session-description = proto-version
                       attribute-fields
                       media-descriptions
 
-proto-version =       %x76 "=" 1*DIGIT CRLF
+proto-version =       %x76 "=" 1*DIGIT CRLF !!!
+  [_, _, v, _] = tokens
+  {:ok, Map.put(state, :version, v)}
+!!!
                       ;this memo describes version 0
 
 origin-field =        %x6f "=" username SP sess-id SP sess-version SP
-                      nettype SP addrtype SP unicast-address CRLF
+                      nettype SP addrtype SP unicast-address CRLF !!!
+  [
+    _,
+    _,
+    username,
+    _,
+    sess_id,
+    _,
+    sess_version,
+    _,
+    net_type,
+    _,
+    addr_type,
+    _,
+    unicast,
+    _
+  ] = tokens
+  {:ok, Map.put(state, :origin, %{
+    username: username,
+    session_id: sess_id,
+    session_version: sess_version,
+    net_type: net_type,
+    address_type: addr_type,
+    unicast_address: unicast
+  })}
+!!!
 
-session-name-field =  %x73 "=" text CRLF
+session-name-field =  %x73 "=" text CRLF  !!!
+  [_, _, s, _] = tokens
+  {:ok, Map.put(state, :session_name, s)}
+!!!
 
 information-field =   [%x69 "=" text CRLF]
 
@@ -29,7 +60,9 @@ email-fields =        *(%x65 "=" email-address CRLF)
 phone-fields =        *(%x70 "=" phone-number CRLF)
 
 connection-field =    [%x63 "=" nettype SP addrtype SP
-                      connection-address CRLF]
+                      connection-address CRLF] !!!
+{:ok, state}
+!!!
                       ;a connection field must be present
                       ;in every media description or at the
                       ;session-level
