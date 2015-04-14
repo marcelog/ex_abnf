@@ -8,8 +8,8 @@ which is updated in [https://tools.ietf.org/html/rfc5234](https://tools.ietf.org
 
 ## Use example
 
-    iex(1)> grammar = ex_abnf.load_file "samples/ipv4.abnf"
-    iex(2)> ABNF.apply grammar, "ipv4address", '250.246.192.34'
+    iex(1)> grammar = ABNF.load_file "samples/ipv4.abnf"
+    iex(2)> ABNF.apply grammar, "ipv4address", '250.246.192.34', %{}
     {'250.246.192.34', []}
 
 ## More complex examples
