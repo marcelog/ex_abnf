@@ -15,7 +15,7 @@
 ################################################################################
 defmodule ABNF.Interpreter do
   alias ABNF.Util, as: Util
-
+  require Logger
   @moduledoc """
   Parser functions for the abnf rules.
   """
@@ -34,10 +34,15 @@ defmodule ABNF.Interpreter do
     case run_tail grammar, input, state, v.elements do
       r = {match, rest, state} ->
         if(v.code !== nil) do
+          m = case match do
+            [] -> ''
+            _ -> :lists.flatten(match)
+          end
           case Code.eval_string v.code, [
-            {:state, state}, {String.to_atom(rule), match}
+            {:state, state}, {String.to_atom(rule), m}, {:tokens, match}
           ], __ENV__ do
             {{:ok, state}, _} -> {match, rest, state}
+            {{:ok, state, val}, _} -> {val, rest, state}
             r -> throw r
           end
         else
@@ -63,7 +68,7 @@ defmodule ABNF.Interpreter do
         r = {match, _rest, _state} -> case acc do
           nil -> r
           {last_match, _last_rest, _last_state} ->
-            if length(match) > length(last_match) do
+            if length(:lists.flatten(match)) > length(:lists.flatten(last_match)) do
               r
             else
               acc
@@ -78,7 +83,8 @@ defmodule ABNF.Interpreter do
   end
 
   defp concatenations(_grammar, input, state, [], acc) do
-    {:lists.flatten(Enum.reverse(acc)), input, state}
+    match = Enum.map Enum.reverse(acc), fn(m) -> :lists.flatten(m) end
+    {match, input, state}
   end
 
   defp concatenations(grammar, input, state, [c|concs], acc, bt \\ 1) do
@@ -90,22 +96,19 @@ defmodule ABNF.Interpreter do
               nil -> if (length(match) - bt) >= c.repetition.repeat.from do
                 [last_one|right_matches] = Enum.slice match, (bt - 1), length(match)
                 concatenations(
-                  grammar, (last_one ++ rest), state, concs, (right_matches ++ acc), (bt + 1)
+                  grammar, :lists.flatten(last_one ++ rest), state, concs, (right_matches ++ acc), (bt + 1)
                 )
               else
                 concatenations(
-                  grammar, rest, new_state, concs,
-                  [:lists.flatten(Enum.reverse(match))|acc]
+                  grammar, rest, new_state, concs, [Enum.reverse(match)|acc]
                 )
               end
               _ -> concatenations(
-                grammar, rest, new_state, concs,
-                [:lists.flatten(Enum.reverse(match))|acc]
+                grammar, rest, new_state, concs, [Enum.reverse(match)|acc]
               )
             end
           _ -> concatenations(
-            grammar, rest, new_state, concs,
-            [:lists.flatten(Enum.reverse(match))|acc]
+            grammar, rest, new_state, concs, [Enum.reverse(match)|acc]
           )
       end
       _ ->
@@ -129,7 +132,7 @@ defmodule ABNF.Interpreter do
         if(length(acc) === to) do
           {acc, rest, state}
         else
-          if (match === '' and from === 0) do
+          if ((match === [] or match === [[]]) and from === 0) do
             nil
           else
             repetition grammar, rest, state, e, from, to, acc

@@ -10,7 +10,13 @@ which is updated in [https://tools.ietf.org/html/rfc5234](https://tools.ietf.org
 
     iex(1)> grammar = ABNF.load_file "samples/ipv4.abnf"
     iex(2)> ABNF.apply grammar, "ipv4address", '250.246.192.34', %{}
-    {'250.246.192.34', []}
+    {['250', '.', '246', '.', '192', '.', '34'], [], %{ipv4address: '250.246.192.34'}}
+
+The result can be read as a tuple where the elements are:
+ 1. All tokens that matched (in this case, [octet, dot, octet, dot, octet, dot, octet]).
+ 2. The rest of the input that didn't match (empty in this case, since the whole input could be parsed).
+ 3. The state. The last argument of ABNF.apply/4 indicates an initial state passed through all the rules that
+ is filled in the [grammar itself](https://github.com/marcelog/ex_abnf/blob/master/samples/ipv4.abnf#L5).
 
 ## More complex examples
 
@@ -45,9 +51,24 @@ userinfo      = *( unreserved / pct-encoded / sub-delims / ":" ) !!!
 !!!
 ```
 
-Your code will be called with a binding called *state* and another one called like
-the rule that matched, and should return either **{:ok, state}** or **{:error, state}**. In
-the last case, the full grammar will be aborted and that error will be thrown.
+Your code will be called with the following bindings:
+ * state: This is the state that you can pass when calling the initial **ABNF.apply**
+ function, and is a way to keep state through the whole match, it can be whatever you
+ like and can mutate through calls as long as your code can handle it.
+
+ * tokens: When a rule is composed of different tokens (e.g: path = SEGMENT "/" SEGMENT) this
+ contains a list with all the values of those tokens in order. In YACC terms, this would be
+ the equivalent of using $1, $2, $3, etc.
+
+And can return:
+ * {:ok, state}: The match continues, and the new state is used for
+ future calls.
+
+ * {:ok, state, rule_value}: The match continues, and the new state is used for
+ future calls. Also, the **rule_value** is used as the result of the match (but it **must** be
+ a char list). In YACC terms, rule_value would be the equivalent of $$ = ...
+
+ * {:error, error}: The whole match is aborted and this error is thrown.
 
 **NOTE**: All rules are lowercased and all dashes are replaced with "_". See
 [this example](https://github.com/marcelog/ex_abnf/blob/master/samples/RFC3986.abnf#L76) for
