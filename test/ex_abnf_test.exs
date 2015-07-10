@@ -20,6 +20,23 @@ defmodule ABNF_Test do
   alias ABNF
   require Logger
 
+  @tag :rfc3966
+  test "teluri" do
+    grammar = ABNF.load_file "samples/RFC3966.abnf"
+
+    tel = 'tel:+1-201-555-0123'
+    {
+      ['tel:', '+1-201-555-0123'], '', %{}
+    } = ABNF.apply grammar, "telephone_uri", tel, %{}
+
+
+    tel = 'tel:863-1234;phone-context=+1-914-555'
+    {
+      ['tel:', '863-1234;phone-context=+1-914-555'], '', %{}
+    } = ABNF.apply grammar, "telephone_uri", tel, %{}
+
+
+  end
   test "sdp" do
     grammar = ABNF.load_file "samples/RFC4566.abnf"
     data = to_char_list(File.read! "test/resources/sdp1.txt")

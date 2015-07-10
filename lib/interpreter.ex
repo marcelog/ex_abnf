@@ -225,7 +225,7 @@ defmodule ABNF.Interpreter do
   end
 
   defp num_concat(input, state, chars) do
-    num_concat input, chars, '', state
+    num_concat input, state, chars, ''
   end
 
   defp num_concat(_input, _state, '', '') do
