@@ -62,19 +62,25 @@ defmodule ABNF.Interpreter do
   defp run_tail(grammar, input, state, cs) do
     # We run all concatenations, and then choose by the longest match in the
     # best possible ugly way :\
-    Enum.reduce cs, nil, fn(%{concatenation: c}, acc) ->
+    r = Enum.reduce cs, nil, fn(%{concatenation: c}, acc) ->
       case concatenations grammar, input, state, c do
         nil -> acc
-        r = {match, _rest, _state} -> case acc do
-          nil -> r
-          {last_match, _last_rest, _last_state} ->
-            if length(:lists.flatten(match)) > length(:lists.flatten(last_match)) do
-              r
-            else
-              acc
-            end
-        end
+        {match, rest, state} ->
+          l = :erlang.iolist_size(match)
+          case acc do
+            nil -> {match, rest, state, l}
+            {_last_match, _last_rest, _last_state, last_length} ->
+              if l > last_length do
+                {match, rest, state, l}
+              else
+                acc
+              end
+          end
       end
+    end
+    case r do
+      {lm, lr, ls, _} -> {lm, lr, ls}
+      nil -> nil
     end
   end
 
@@ -93,10 +99,13 @@ defmodule ABNF.Interpreter do
         case concs do
           [c2|_next_concs] ->
             case concatenation grammar, rest, new_state, c2 do
-              nil -> if (length(match) - bt) >= c.repetition.repeat.from do
-                [last_one|right_matches] = Enum.slice match, (bt - 1), length(match)
-                concatenations(
-                  grammar, :lists.flatten(last_one ++ rest), state, concs, (right_matches ++ acc), (bt + 1)
+              nil ->
+                lm = length(match)
+                if (lm - bt) >= c.repetition.repeat.from do
+                  [last_one|right_matches] = Enum.slice match, (bt - 1), lm
+                  concatenations(
+                    grammar, :lists.flatten([last_one|rest]),
+                    state, concs, (right_matches ++ acc), (bt + 1)
                 )
               else
                 concatenations(
