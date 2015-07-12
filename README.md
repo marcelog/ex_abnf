@@ -37,7 +37,7 @@ To use it in your Mix projects, first add it as a dependency:
 
 ```elixir
 def deps do
-  [{:ex_abnf, "~> 0.1.4"}]
+  [{:ex_abnf, "~> 0.1.5"}]
 end
 ```
 Then run mix deps.get to install it.
