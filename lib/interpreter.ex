@@ -93,8 +93,15 @@ defmodule ABNF.Interpreter do
     {match, input, state}
   end
 
-  defp concatenations(grammar, input, state, [c|concs], acc, bt \\ 1) do
-    case concatenation grammar, input, state, c do
+  defp concatenations(
+    grammar, input, state, [c|concs], acc, bt \\ 1, next_match \\ nil
+  ) do
+    this_match = if is_nil next_match do
+      concatenation grammar, input, state, c
+    else
+      next_match
+    end
+    case this_match do
       {match, rest, new_state} ->
         case concs do
           [c2|_next_concs] ->
@@ -112,15 +119,16 @@ defmodule ABNF.Interpreter do
                     grammar, rest, new_state, concs, [Enum.reverse(match)|acc]
                   )
                 end
-              _ -> concatenations(
-                grammar, rest, new_state, concs, [Enum.reverse(match)|acc]
+              r -> concatenations(
+                grammar, rest, new_state, concs,
+                [Enum.reverse(match)|acc], bt, r
               )
             end
-          _ -> concatenations(
+          [] -> concatenations(
             grammar, rest, new_state, concs, [Enum.reverse(match)|acc]
           )
       end
-      _ ->
+      nil ->
         if c.repetition.repeat.from === 0 do
           concatenations grammar, input, state, concs, acc
         else
