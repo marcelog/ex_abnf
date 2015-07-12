@@ -107,11 +107,11 @@ defmodule ABNF.Interpreter do
                     grammar, :lists.flatten([last_one|rest]),
                     state, concs, (right_matches ++ acc), (bt + 1)
                 )
-              else
-                concatenations(
-                  grammar, rest, new_state, concs, [Enum.reverse(match)|acc]
-                )
-              end
+                else
+                  concatenations(
+                    grammar, rest, new_state, concs, [Enum.reverse(match)|acc]
+                  )
+                end
               _ -> concatenations(
                 grammar, rest, new_state, concs, [Enum.reverse(match)|acc]
               )
