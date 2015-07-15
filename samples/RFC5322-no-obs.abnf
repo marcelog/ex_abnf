@@ -42,9 +42,9 @@ day-of-week     =   ([FWS] day-name)
 day-name        =   "Mon" / "Tue" / "Wed" / "Thu" / "Fri" / "Sat" / "Sun"
 date            =   day month year !!!
   [d, m, y] = tokens
-  state = Map.put(state, :day, d)
-  state = Map.put(state, :month, m)
-  {:ok, Map.put(state, :year, y)}
+  state = Map.put(state, :day, :lists.flatten(d))
+  state = Map.put(state, :month, :lists.flatten(m))
+  {:ok, Map.put(state, :year, :lists.flatten(y))}
 !!!
 day             =   ([FWS] 1*2DIGIT FWS)  !!!
   {:ok, state, to_char_list String.strip(to_string(day))}
@@ -57,7 +57,7 @@ year            =   (FWS 4*DIGIT FWS) !!!
 !!!
 time            =   time-of-day zone !!!
   [_, tz] = tokens
-  {:ok, Map.put(state, :tz, tz)}
+  {:ok, Map.put(state, :tz, :lists.flatten(tz))}
 !!!
 time-of-day     =   hour ":" minute [ ":" second ]
 hour            =   2DIGIT !!!

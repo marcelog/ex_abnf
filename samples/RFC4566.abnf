@@ -14,7 +14,7 @@ session-description = proto-version
 
 proto-version =       %x76 "=" 1*DIGIT CRLF !!!
   [_, _, v, _] = tokens
-  {:ok, Map.put(state, :version, v)}
+  {:ok, Map.put(state, :version, :lists.flatten(v))}
 !!!
                       ;this memo describes version 0
 
@@ -37,18 +37,18 @@ origin-field =        %x6f "=" username SP sess-id SP sess-version SP
     _
   ] = tokens
   {:ok, Map.put(state, :origin, %{
-    username: username,
-    session_id: sess_id,
-    session_version: sess_version,
-    net_type: net_type,
-    address_type: addr_type,
-    unicast_address: unicast
+    username: :lists.flatten(username),
+    session_id: :lists.flatten(sess_id),
+    session_version: :lists.flatten(sess_version),
+    net_type: :lists.flatten(net_type),
+    address_type: :lists.flatten(addr_type),
+    unicast_address: :lists.flatten(unicast)
   })}
 !!!
 
 session-name-field =  %x73 "=" text CRLF  !!!
   [_, _, s, _] = tokens
-  {:ok, Map.put(state, :session_name, s)}
+  {:ok, Map.put(state, :session_name, :lists.flatten(s))}
 !!!
 
 information-field =   [%x69 "=" text CRLF]

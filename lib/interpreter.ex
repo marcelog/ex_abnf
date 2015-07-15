@@ -32,17 +32,17 @@ defmodule ABNF.Interpreter do
       throw {:invalid_rule, rule}
     end
     case run_tail grammar, input, state, v.elements do
-      r = {match, rest, state} ->
+      r = {match, values, rest, state} ->
         if(v.code !== nil) do
           m = case match do
             [] -> ''
             _ -> :lists.flatten(match)
           end
           case Code.eval_string v.code, [
-            {:state, state}, {String.to_atom(rule), m}, {:tokens, match}
+            {:state, state}, {String.to_atom(rule), m}, {:tokens, values}
           ], __ENV__ do
-            {{:ok, state}, _} -> {match, rest, state}
-            {{:ok, state, val}, _} -> {val, rest, state}
+            {{:ok, state}, _} -> {match, match, rest, state}
+            {{:ok, state, val}, _} -> {match, val, rest, state}
             r -> throw r
           end
         else
@@ -65,13 +65,13 @@ defmodule ABNF.Interpreter do
     r = Enum.reduce cs, nil, fn(%{concatenation: c}, acc) ->
       case concatenations grammar, input, state, c do
         nil -> acc
-        {match, rest, state} ->
+        {match, values, rest, state} ->
           l = :erlang.iolist_size(match)
           case acc do
-            nil -> {match, rest, state, l}
-            {_last_match, _last_rest, _last_state, last_length} ->
+            nil -> {match, values, rest, state, l}
+            {_last_match, _last_values, _last_rest, _last_state, last_length} ->
               if l > last_length do
-                {match, rest, state, l}
+                {match, values, rest, state, l}
               else
                 acc
               end
@@ -79,22 +79,24 @@ defmodule ABNF.Interpreter do
       end
     end
     case r do
-      {lm, lr, ls, _} -> {lm, lr, ls}
+      {lm, lv, lr, ls, _} -> {lm, lv, lr, ls}
       nil -> nil
     end
   end
 
   defp concatenations(grammar, input, state, concs) do
-    concatenations grammar, input, state, concs, []
+    concatenations grammar, input, state, concs, [], []
   end
 
-  defp concatenations(_grammar, input, state, [], acc) do
+  defp concatenations(_grammar, input, state, [], acc, acc_values) do
     match = Enum.map Enum.reverse(acc), fn(m) -> :lists.flatten(m) end
-    {match, input, state}
+    values = Enum.reverse acc_values
+    {match, values, input, state}
   end
 
   defp concatenations(
-    grammar, input, state, [c|concs], acc, bt \\ 1, next_match \\ nil
+    grammar, input, state, [c|concs], acc, acc_values,
+    bt \\ 1, next_match \\ nil
   ) do
     this_match = if is_nil next_match do
       concatenation grammar, input, state, c
@@ -102,7 +104,7 @@ defmodule ABNF.Interpreter do
       next_match
     end
     case this_match do
-      {match, rest, new_state} ->
+      {match, value, rest, new_state} ->
         case concs do
           [c2|_next_concs] ->
             case concatenation grammar, rest, new_state, c2 do
@@ -110,27 +112,33 @@ defmodule ABNF.Interpreter do
                 lm = length(match)
                 if (lm - bt) >= c.repetition.repeat.from do
                   [last_one|right_matches] = Enum.slice match, (bt - 1), lm
+                  [_last_one_value|right_matches_value] = Enum.slice value, (bt - 1), lm
                   concatenations(
                     grammar, :lists.flatten([last_one|rest]),
-                    state, concs, (right_matches ++ acc), (bt + 1)
+                    state, concs, (right_matches ++ acc),
+                    (right_matches_value ++ acc_values),
+                    (bt + 1)
                 )
                 else
                   concatenations(
-                    grammar, rest, new_state, concs, [Enum.reverse(match)|acc]
+                    grammar, rest, new_state, concs,
+                    [Enum.reverse(match)|acc], [Enum.reverse(value)|acc_values]
                   )
                 end
               r -> concatenations(
                 grammar, rest, new_state, concs,
-                [Enum.reverse(match)|acc], bt, r
+                [Enum.reverse(match)|acc], [Enum.reverse(value)|acc_values],
+                bt, r
               )
             end
           [] -> concatenations(
-            grammar, rest, new_state, concs, [Enum.reverse(match)|acc]
+            grammar, rest, new_state, concs,
+            [Enum.reverse(match)|acc], [Enum.reverse(value)|acc_values]
           )
       end
       nil ->
         if c.repetition.repeat.from === 0 do
-          concatenations grammar, input, state, concs, acc
+          concatenations grammar, input, state, concs, acc, acc_values
         else
           nil
         end
@@ -139,24 +147,25 @@ defmodule ABNF.Interpreter do
 
   # Every concatenation is wrapped into a repetition.
   defp concatenation(grammar, input, state, %{repetition: %{element: e, repeat: r}}) do
-    repetition grammar, input, state, e, r.from, r.to, []
+    repetition grammar, input, state, e, r.from, r.to, [], []
   end
 
-  defp repetition(grammar, input, state, e, from, to, acc) do
+  defp repetition(grammar, input, state, e, from, to, acc, acc_values) do
     case element grammar, input, state, e do
-      {match, rest, state} ->
+      {match, value, rest, state} ->
         acc = [match|acc]
+        acc_values = [value|acc_values]
         if(length(acc) === to) do
-          {acc, rest, state}
+          {acc, acc_values, rest, state}
         else
           if ((match === [] or match === [[]]) and from === 0) do
             nil
           else
-            repetition grammar, rest, state, e, from, to, acc
+            repetition grammar, rest, state, e, from, to, acc, acc_values
           end
         end
       _ -> if(length(acc) >= from) do
-        {acc, input, state}
+        {acc, acc_values, input, state}
       else
         nil
       end
@@ -225,7 +234,7 @@ defmodule ABNF.Interpreter do
       {cl2, rest} = Enum.split input, string_len
       s2 = String.downcase(to_string cl2)
       if string === s2 do
-        {cl2, rest, state}
+        {cl2, cl2, rest, state}
       else
         nil
       end
@@ -236,7 +245,7 @@ defmodule ABNF.Interpreter do
 
   defp num_val(input, state, char) do
     case input do
-      [^char|rest] -> {[char], rest, state}
+      [^char|rest] -> {[char], [char], rest, state}
       _ -> nil
     end
   end
@@ -250,7 +259,8 @@ defmodule ABNF.Interpreter do
   end
 
   defp num_concat(input, state, '', acc) do
-    {Enum.reverse(acc), input, state}
+    m = Enum.reverse(acc)
+    {m, m, input, state}
   end
 
   defp num_concat(input, state, [char|rest2], acc) do
@@ -263,7 +273,7 @@ defmodule ABNF.Interpreter do
   defp num_range(input, state, min, max) do
     case input do
       [char|rest] -> if(char >= min and char <= max) do
-        {[char], rest, state}
+        {[char], [char], rest, state}
       else
         nil
       end

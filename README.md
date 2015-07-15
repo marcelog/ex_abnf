@@ -10,7 +10,7 @@ which is updated in [https://tools.ietf.org/html/rfc5234](https://tools.ietf.org
 
     iex(1)> grammar = ABNF.load_file "samples/ipv4.abnf"
     iex(2)> ABNF.apply grammar, "ipv4address", '250.246.192.34', %{}
-    {['250', '.', '246', '.', '192', '.', '34'], [], %{ipv4address: '250.246.192.34'}}
+    {['250', '.', '246', '.', '192', '.', '34'], _raw_matches, [], %{ipv4address: '250.246.192.34'}}
 
 The result can be read as a tuple where the elements are:
  1. All tokens that matched (in this case, [octet, dot, octet, dot, octet, dot, octet]).
@@ -65,8 +65,7 @@ And can return:
  future calls.
 
  * {:ok, state, rule_value}: The match continues, and the new state is used for
- future calls. Also, the **rule_value** is used as the result of the match (but it **must** be
- a char list). In YACC terms, rule_value would be the equivalent of $$ = ...
+ future calls. Also, the **rule_value** is used as the result of the match. In YACC terms, rule_value would be the equivalent of $$ = ...
 
  * {:error, error}: The whole match is aborted and this error is thrown.
 

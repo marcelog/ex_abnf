@@ -1,0 +1,19 @@
+ALPHA = %x41-5A / %x61-7A   ; A-Z / a-z
+DIGIT = %x30-39
+
+anint = 1*DIGIT !!!
+  {int, ""} = Integer.parse to_string(anint)
+  {:ok, state, int}
+!!!
+
+astring = 1*ALPHA !!!
+  {:ok, state, to_string(astring)}
+!!!
+
+composed = anint astring !!!
+  [[int], [string]] = tokens
+  {:ok, %{state | field: true}, %{
+    int: int,
+    string: string
+  }}
+!!!

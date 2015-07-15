@@ -20,23 +20,66 @@ defmodule ABNF_Test do
   alias ABNF
   require Logger
 
+  test "sip" do
+    grammar = ABNF.load_file "samples/RFC3261.abnf"
+    data = to_char_list(File.read! "test/resources/sip1.txt")
+    state = %{
+      request: true,
+      method: :register,
+      headers: %{
+        "from" => %{
+          addr: %{
+            hostport: %{host: "biloxi.com", port: 5060},
+            scheme: "sip",
+            userinfo: "bob"
+          },
+          display_name: "Bob "
+        }
+      },
+      uri: %{
+        userinfo: nil,
+        hostport: %{
+          host: "registrar.biloxi.com",
+          port: 1234
+        },
+        scheme: "sip"
+      }
+    }
+    {data, _, '', ^state} = ABNF.apply grammar, "SIP-message", data, %{
+      headers: %{}
+    }
+  end
+
+  test "can reduce rule" do
+    grammar = ABNF.load_file "samples/reduce.abnf"
+    {
+      ['123', 'asd'],
+      %{
+        int: 123,
+        string: "asd"
+      },
+      '',
+      %{field: true}
+    } = ABNF.apply grammar, "composed", '123asd', %{field: false}
+
+  end
+
   @tag :rfc3966
   test "teluri" do
     grammar = ABNF.load_file "samples/RFC3966.abnf"
 
     tel = 'tel:+1-201-555-0123'
     {
-      ['tel:', '+1-201-555-0123'], '', %{}
+      ['tel:', '+1-201-555-0123'], _, '', %{}
     } = ABNF.apply grammar, "telephone_uri", tel, %{}
 
 
     tel = 'tel:863-1234;phone-context=+1-914-555'
     {
-      ['tel:', '863-1234;phone-context=+1-914-555'], '', %{}
+      ['tel:', '863-1234;phone-context=+1-914-555'], _, '', %{}
     } = ABNF.apply grammar, "telephone_uri", tel, %{}
-
-
   end
+
   test "sdp" do
     grammar = ABNF.load_file "samples/RFC4566.abnf"
     data = to_char_list(File.read! "test/resources/sdp1.txt")
@@ -54,7 +97,7 @@ defmodule ABNF_Test do
       '',
       '',
       'm=audio 49170 RTP/AVP 0 8 97\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:97 iLBC/8000\r\nm=video 51372 RTP/AVP 31 32\r\na=rtpmap:31 H261/90000\r\na=rtpmap:32 MPV/90000\r\n'
-      ], '', %{
+      ], _, '', %{
         version: '0',
         session_name: 'description',
         origin: %{
@@ -70,50 +113,50 @@ defmodule ABNF_Test do
 
   test "medium complexity" do
     grammar = ABNF.load_file "samples/path.abnf"
-    {['s', 'egment'], '', ['segment']} =
+    {['s', 'egment'], _, '', ['segment']} =
       ABNF.apply grammar, "segment", 'segment', []
 
-    {['/', 'a', ''], '', ['a']} =
+    {['/', 'a', ''], _, '', ['a']} =
       ABNF.apply grammar, "path", '/a', []
 
-    {['/', 'aa', '/bb'], '', ['aa', 'bb']} =
+    {['/', 'aa', '/bb'], _, '', ['aa', 'bb']} =
       ABNF.apply grammar, "path", '/aa/bb', []
   end
 
   test "basic repetition and optional" do
     grammar = ABNF.load_file "samples/basic.abnf"
-    {['helloworld'], ' rest', nil} =
+    {['helloworld'], _, ' rest', nil} =
       ABNF.apply grammar, "string1", 'helloworld rest', nil
 
-    {['hel'], 'loworld rest', nil} =
+    {['hel'], _, 'loworld rest', nil} =
       ABNF.apply grammar, "string2", 'helloworld rest', nil
 
-    {['he'], 'lloworld rest', nil} =
+    {['he'], _, 'lloworld rest', nil} =
       ABNF.apply grammar, "string3", 'helloworld rest', nil
 
-    {['helloworld'], ' rest', nil} =
+    {['helloworld'], _, ' rest', nil} =
       ABNF.apply grammar, "string4", 'helloworld rest', nil
 
-    {['3', 'helloworld'], ' rest', nil} =
+    {['3', 'helloworld'], _, ' rest', nil} =
       ABNF.apply grammar, "string5", '3helloworld rest', nil
 
-    {['3', 'helloworld'], ' rest', nil} =
+    {['3', 'helloworld'], _, ' rest', nil} =
       ABNF.apply grammar, "string5", '3helloworld rest', nil
 
-    {['', 'helloworld'], ' rest', nil} =
+    {['', 'helloworld'], _, ' rest', nil} =
       ABNF.apply grammar, "string5", 'helloworld rest', nil
   end
 
   test "ipv4" do
     grammar = ABNF.load_file "samples/ipv4.abnf"
 
-    {['1', '.', '2', '.', '3', '.', '4'], 'rest', %{ipv4address: '1.2.3.4'}} =
+    {['1', '.', '2', '.', '3', '.', '4'], _, 'rest', %{ipv4address: '1.2.3.4'}} =
       ABNF.apply grammar, "ipv4address", '1.2.3.4rest', %{}
 
-    {['192', '.', '168', '.', '0', '.', '1'], 'rest', %{ipv4address: '192.168.0.1'}} =
+    {['192', '.', '168', '.', '0', '.', '1'], _, 'rest', %{ipv4address: '192.168.0.1'}} =
       ABNF.apply grammar, "ipv4address", '192.168.0.1rest', %{}
 
-    {['255', '.', '255', '.', '255', '.', '255'], 'rest', %{ipv4address: '255.255.255.255'}} =
+    {['255', '.', '255', '.', '255', '.', '255'], _, 'rest', %{ipv4address: '255.255.255.255'}} =
       ABNF.apply grammar, "ipv4address", '255.255.255.255rest', %{}
 
     nil = ABNF.apply grammar, "ipv4address", '255.255.256.255rest', %{}
@@ -323,7 +366,7 @@ defmodule ABNF_Test do
 
     Enum.each addresses, fn(a) ->
       Logger.debug "Testing IPv6: #{inspect a}"
-      {ret, 'rest', %{}} = ABNF.apply grammar, "ipv6address", a ++ 'rest', %{}
+      {ret, _, 'rest', %{}} = ABNF.apply grammar, "ipv6address", a ++ 'rest', %{}
       ^a = :lists.flatten ret
     end
 
@@ -334,7 +377,7 @@ defmodule ABNF_Test do
     url = 'http://user:pass@host.com:421/some/path?k1=v1&k2=v2#one_fragment'
     {
       ['http', ':', '//user:pass@host.com:421/some/path', '?k1=v1&k2=v2', '#one_fragment'],
-      '',
+      _, '',
       %{
         fragment: 'one_fragment',
         host: 'host.com',
@@ -351,7 +394,7 @@ defmodule ABNF_Test do
     url = 'http:/path'
     {
       ['http', ':', '/path', '', ''],
-      '',
+      _, '',
       %{
         scheme: 'http',
         segments: ['path'],
@@ -362,7 +405,7 @@ defmodule ABNF_Test do
     url = 'http://a.com'
     {
       ['http', ':', '//a.com', '', ''],
-      '',
+      _, '',
       %{
         scheme: 'http',
         host: 'a.com',
@@ -375,7 +418,7 @@ defmodule ABNF_Test do
     url = 'http://a.com:789'
     {
       ['http', ':', '//a.com:789', '', ''],
-      '',
+      _, '',
       %{
         scheme: 'http',
         host: 'a.com',
@@ -389,7 +432,7 @@ defmodule ABNF_Test do
     url = 'http://192.168.0.1/path'
     {
       ['http', ':', '//192.168.0.1/path', '', ''],
-      '',
+      _, '',
       %{
         scheme: 'http',
         host: '192.168.0.1',
@@ -402,7 +445,7 @@ defmodule ABNF_Test do
     url = 'http:'
     {
       ['http', ':', '', '', ''],
-      '',
+      _, '',
       %{
         scheme: 'http',
         segments: [],
@@ -413,7 +456,7 @@ defmodule ABNF_Test do
     url = 'http:path1/path2'
     {
       ['http', ':', 'path1/path2', '', ''],
-      '',
+      _, '',
       %{
         scheme: 'http',
         segments: ['path1', 'path2'],
@@ -425,7 +468,7 @@ defmodule ABNF_Test do
     url = 'http://[v1.fe80::a+en1]/path'
     {
       ['http', ':', '//[v1.fe80::a+en1]/path', '', ''],
-      '',
+      _, '',
       %{
         scheme: 'http',
         host: '[v1.fe80::a+en1]',
@@ -439,29 +482,29 @@ defmodule ABNF_Test do
   test "email" do
     grammar = ABNF.load_file "samples/RFC5322-no-obs.abnf"
 
-    {['user@domain.com'], '', %{
+    {['user@domain.com'], _, '', %{
       domain: 'domain.com',
       local_part: 'user'
     }} = ABNF.apply grammar, "mailbox", 'user@domain.com', %{}
 
-    {['<user@domain.com>'], '', %{
+    {['<user@domain.com>'], _, '', %{
       domain: 'domain.com',
       local_part: 'user'
     }} = ABNF.apply grammar, "mailbox", '<user@domain.com>', %{}
 
-    {['Peter Cantropus <user@domain.com>'], '', %{
+    {['Peter Cantropus <user@domain.com>'], _, '', %{
       domain: 'domain.com',
       local_part: 'user',
       display_name: 'Peter Cantropus '
     }} = ABNF.apply grammar, "mailbox", 'Peter Cantropus <user@domain.com>', %{}
 
-    {['Peter Cantropus <user@domain.com>'], '', %{
+    {['Peter Cantropus <user@domain.com>'], _, '', %{
       domain: 'domain.com',
       local_part: 'user',
       display_name: 'Peter Cantropus '
     }} = ABNF.apply grammar, "mailbox", 'Peter Cantropus <user@domain.com>', %{}
 
-    {[[], '21Nov1997', '10:01:22-0600', []], '', %{
+    {[[], '21 Nov 1997 ', '10:01:22 -0600', []], _, '', %{
       month: 'Nov',
       year: '1997',
       day: '21',
@@ -471,7 +514,7 @@ defmodule ABNF_Test do
       second: '22'
     }} = ABNF.apply grammar, "date_time", '21 Nov 1997 10:01:22 -0600', %{}
 
-    {['Received:', ' from node.example by x.y.test', ';', '21Nov199710:01:22-0600', '\r\n'], '', %{
+    {['Received:', ' from node.example by x.y.test', ';', ' 21 Nov 1997 10:01:22 -0600', '\r\n'], _, '', %{
       day: '21',
       domain: 'x.y.test',
       hour: '10',
