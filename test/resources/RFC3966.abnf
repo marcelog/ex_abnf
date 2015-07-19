@@ -1,0 +1,44 @@
+telephone-uri        = "tel:" telephone-subscriber
+telephone-subscriber = global-number / local-number
+global-number        = global-number-digits *par
+local-number         = local-number-digits *par context *par
+par                  = parameter / extension / isdn-subaddress
+isdn-subaddress      = ";isub=" 1*paramchar
+extension            = ";ext=" 1*phonedigit
+context              = ";phone-context=" descriptor
+descriptor           = domainname / global-number-digits
+global-number-digits = "+" *phonedigit DIGIT *phonedigit
+local-number-digits  = *phonedigit-hex (HEXDIG / "*" / "#") *phonedigit-hex
+domainname           = *( domainlabel "." ) toplabel [ "." ]
+domainlabel          = alphanum / alphanum *( alphanum / "-" ) alphanum
+toplabel             = ALPHA / ALPHA *( alphanum / "-" ) alphanum
+parameter            = ";" pname ["=" pvalue ]
+pname                = 1*( alphanum / "-" )
+pvalue               = 1*paramchar
+paramchar            = param-unreserved / unreserved / pct-encoded
+unreserved           = alphanum / mark
+mark                 = "-" / "_" / "." / "!" / "~" / "*" / "'" / "(" / ")"
+pct-encoded          = "%" HEXDIG HEXDIG
+param-unreserved     = "[" / "]" / "/" / ":" / "&" / "+" / "$"
+phonedigit           = DIGIT /  visual-separator
+phonedigit-hex       = HEXDIG / "*" / "#" /  visual-separator
+visual-separator     = "-" / "." / "(" / ")"
+alphanum             = ALPHA / DIGIT
+reserved             = ";" / "/" / "?" / ":" / "@" / "&" / "=" / "+" / "$" / ","
+uric                 = reserved / unreserved / pct-encoded
+ALPHA                =  %x41-5A / %x61-7A   ; A-Z / a-z
+BIT                  =  "0" / "1"
+CHAR                 =  %x01-7F ; any 7-bit US-ASCII character, excluding NUL
+CR                   =  %x0D ; carriage return
+CRLF                 =  CR LF ; Internet standard newline
+CTL                  =  %x00-1F / %x7F ; controls
+DIGIT                =  %x30-39 ; 0-9
+DQUOTE               =  %x22 ; " (Double Quote)
+HEXDIG               =  DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
+HTAB                 =  %x09 ; horizontal tab
+LF                   =  %x0A ; linefeed
+LWSP                 =  *(WSP / CRLF WSP) ; linear white space (past newline)
+OCTET                =  %x00-FF ; 8 bits of data
+SP                   =  %x20
+VCHAR                =  %x21-7E ; visible (printing) characters
+WSP                  =  SP / HTAB ; white space

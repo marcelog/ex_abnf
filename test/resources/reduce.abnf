@@ -1,0 +1,19 @@
+ALPHA = %x41-5A / %x61-7A   ; A-Z / a-z
+DIGIT = %x30-39
+
+anint = 1*DIGIT !!!
+  {int, ""} = Integer.parse to_string(rule)
+  {:ok, state, int}
+!!!
+
+astring = 1*ALPHA !!!
+  {:ok, state, to_string(rule)}
+!!!
+
+composed = anint astring !!!
+  [int, string] = values
+  {:ok, %{state | field: true}, %{
+    int: hd(:lists.flatten(int)),
+    string: hd(:lists.flatten(string))
+  }}
+!!!

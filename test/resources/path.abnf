@@ -1,0 +1,5 @@
+ALPHA          =  %x61-7A   ; A-Z / a-z
+path = *("/" segment)
+segment = ALPHA *ALPHA !!!
+  {:ok, state ++ [rule]}
+!!!
