@@ -1,0 +1,307 @@
+session-description = proto-version
+                      origin-field
+                      session-name-field
+                      information-field
+                      uri-field
+                      email-fields
+                      phone-fields
+                      connection-field
+                      bandwidth-fields
+                      time-fields
+                      key-field
+                      attribute-fields
+                      media-descriptions
+
+proto-version =       %x76 "=" 1*DIGIT CRLF !!!
+  [_, _, v, _] = values
+  {:ok, Map.put(state, :version, :lists.flatten(v))}
+!!!
+                      ;this memo describes version 0
+
+origin-field =        %x6f "=" username SP sess-id SP sess-version SP
+                      nettype SP addrtype SP unicast-address CRLF !!!
+  [
+    _,
+    _,
+    username,
+    _,
+    sess_id,
+    _,
+    sess_version,
+    _,
+    net_type,
+    _,
+    addr_type,
+    _,
+    unicast,
+    _
+  ] = values
+  {:ok, Map.put(state, :origin, %{
+    username: :lists.flatten(username),
+    session_id: :lists.flatten(sess_id),
+    session_version: :lists.flatten(sess_version),
+    net_type: :lists.flatten(net_type),
+    address_type: :lists.flatten(addr_type),
+    unicast_address: :lists.flatten(unicast)
+  })}
+!!!
+
+session-name-field =  %x73 "=" text CRLF  !!!
+  [_, _, s, _] = values
+  {:ok, Map.put(state, :session_name, :lists.flatten(s))}
+!!!
+
+information-field =   [%x69 "=" text CRLF]
+
+uri-field =           [%x75 "=" uri CRLF]
+
+email-fields =        *(%x65 "=" email-address CRLF)
+
+phone-fields =        *(%x70 "=" phone-number CRLF)
+
+connection-field =    [%x63 "=" nettype SP addrtype SP
+                      connection-address CRLF] !!!
+{:ok, state}
+!!!
+                      ;a connection field must be present
+                      ;in every media description or at the
+                      ;session-level
+
+bandwidth-fields =    *(%x62 "=" bwtype ":" bandwidth CRLF)
+
+time-fields =         1*( %x74 "=" start-time SP stop-time
+                      *(CRLF repeat-fields) CRLF)
+                      [zone-adjustments CRLF]
+
+repeat-fields =       %x72 "=" repeat-interval SP typed-time
+                      1*(SP typed-time)
+
+zone-adjustments =    %x7a "=" time SP ["-"] typed-time
+                      *(SP time SP ["-"] typed-time)
+
+key-field =           [%x6b "=" key-type CRLF]
+
+attribute-fields =    *(%x61 "=" attribute CRLF)
+
+media-descriptions =  *( media-field
+                      information-field
+                      *connection-field
+                      bandwidth-fields
+                      key-field
+                      attribute-fields )
+
+media-field =         %x6d "=" media SP port ["/" integer]
+                      SP proto 1*(SP fmt) CRLF
+
+; sub-rules of 'o='
+username =            non-ws-string
+                      ;pretty wide definition, but doesn't
+                      ;include space
+
+sess-id =             1*DIGIT
+                      ;should be unique for this username/host
+
+sess-version =        1*DIGIT
+
+nettype =             token
+                      ;typically "IN"
+
+addrtype =            token
+                      ;typically "IP4" or "IP6"
+
+; sub-rules of 'u='
+uri =                 URI-reference
+                      ; see RFC 3986
+
+
+; sub-rules of 'e=', see RFC 2822 for definitions
+email-address        = address-and-comment / dispname-and-address
+                       / addr-spec
+address-and-comment  = addr-spec 1*SP "(" 1*email-safe ")"
+dispname-and-address = 1*email-safe 1*SP "<" addr-spec ">"
+
+; sub-rules of 'p='
+phone-number =        phone *SP "(" 1*email-safe ")" /
+                      1*email-safe "<" phone ">" /
+                      phone
+
+phone =               ["+"] DIGIT 1*(SP / "-" / DIGIT)
+
+; sub-rules of 'c='
+connection-address =  multicast-address / unicast-address
+
+; sub-rules of 'b='
+bwtype =              token
+
+bandwidth =           1*DIGIT
+
+; sub-rules of 't='
+start-time =          time / "0"
+
+stop-time =           time / "0"
+
+time =                POS-DIGIT 9*DIGIT
+                      ; Decimal representation of NTP time in
+                      ; seconds since 1900.  The representation
+                      ; of NTP time is an unbounded length field
+                      ; containing at least 10 digits.  Unlike the
+                      ; 64-bit representation used elsewhere, time
+                      ; in SDP does not wrap in the year 2036.
+
+; sub-rules of 'r=' and 'z='
+repeat-interval =     POS-DIGIT *DIGIT [fixed-len-time-unit]
+
+typed-time =          1*DIGIT [fixed-len-time-unit]
+
+fixed-len-time-unit = %x64 / %x68 / %x6d / %x73
+
+; sub-rules of 'k='
+key-type =            %x70 %x72 %x6f %x6d %x70 %x74 /     ; "prompt"
+                      %x63 %x6c %x65 %x61 %x72 ":" text / ; "clear:"
+                      %x62 %x61 %x73 %x65 "64:" base64 /  ; "base64:"
+                      %x75 %x72 %x69 ":" uri              ; "uri:"
+
+base64      =         *base64-unit [base64-pad]
+
+base64-unit =         4base64-char
+base64-pad  =         2base64-char "==" / 3base64-char "="
+base64-char =         ALPHA / DIGIT / "+" / "/"
+
+; sub-rules of 'a='
+attribute =           (att-field ":" att-value) / att-field
+
+att-field =           token
+
+att-value =           byte-string
+
+; sub-rules of 'm='
+media =               token
+                      ;typically "audio", "video", "text", or
+                      ;"application"
+
+fmt =                 token
+                      ;typically an RTP payload type for audio
+                      ;and video media
+
+proto  =              token *("/" token)
+                      ;typically "RTP/AVP" or "udp"
+
+port =                1*DIGIT
+
+; generic sub-rules: addressing
+unicast-address =     IP4-address / IP6-address / FQDN / extn-addr
+
+multicast-address =   IP4-multicast / IP6-multicast / FQDN
+                      / extn-addr
+
+IP4-multicast =       m1 3( "." decimal-uchar )
+                      "/" ttl [ "/" integer ]
+                      ; IPv4 multicast addresses may be in the
+                      ; range 224.0.0.0 to 239.255.255.255
+
+m1 =                  ("22" ("4"/"5"/"6"/"7"/"8"/"9")) /
+                      ("23" DIGIT )
+
+IP6-multicast =       hexpart [ "/" integer ]
+                      ; IPv6 address starting with FF
+
+ttl =                 (POS-DIGIT *2DIGIT) / "0"
+
+FQDN =                4*(alpha-numeric / "-" / ".")
+                      ; fully qualified domain name as specified
+                      ; in RFC 1035 (and updates)
+
+IP4-address =         b1 3("." decimal-uchar)
+
+b1 =                  decimal-uchar
+                      ; less than "224"
+
+; The following is consistent with RFC 2373 [30], Appendix B.
+IP6-address =         hexpart [ ":" IP4-address ]
+
+hexpart =             hexseq / hexseq "::" [ hexseq ] /
+                      "::" [ hexseq ]
+
+hexseq  =             hex4 *( ":" hex4)
+
+hex4    =             1*4HEXDIG
+
+; Generic for other address families
+extn-addr =           non-ws-string
+
+; generic sub-rules: datatypes
+text =                byte-string
+                      ;default is to interpret this as UTF8 text.
+                      ;ISO 8859-1 requires "a=charset:ISO-8859-1"
+                      ;session-level attribute to be used
+
+byte-string =         1*(%x01-09/%x0B-0C/%x0E-FF)
+                      ;any byte except NUL, CR, or LF
+
+non-ws-string =       1*(VCHAR/%x80-FF)
+                      ;string of visible characters
+
+token-char =          %x21 / %x23-27 / %x2A-2B / %x2D-2E / %x30-39
+                      / %x41-5A / %x5E-7E
+
+token =               1*(token-char)
+
+email-safe =          %x01-09/%x0B-0C/%x0E-27/%x2A-3B/%x3D/%x3F-FF
+                      ;any byte except NUL, CR, LF, or the quoting
+                      ;characters ()<>
+
+integer =             POS-DIGIT *DIGIT
+
+; generic sub-rules: primitives
+alpha-numeric =       ALPHA / DIGIT
+
+POS-DIGIT =           %x31-39 ; 1 - 9
+decimal-uchar =       DIGIT
+                      / POS-DIGIT DIGIT
+                      / ("1" 2*(DIGIT))
+                      / ("2" ("0"/"1"/"2"/"3"/"4") DIGIT)
+                      / ("2" "5" ("0"/"1"/"2"/"3"/"4"/"5"))
+ALPHA          =  %x41-5A / %x61-7A   ; A-Z / a-z
+
+BIT            =  "0" / "1"
+
+CHAR           =  %x01-7F
+                       ; any 7-bit US-ASCII character,
+                       ;  excluding NUL
+
+CR             =  %x0D
+                       ; carriage return
+
+CRLF           =  [CR] LF
+                       ; Internet standard newline
+
+CTL            =  %x00-1F / %x7F
+                       ; controls
+
+DIGIT          =  %x30-39
+                       ; 0-9
+
+DQUOTE         =  %x22
+                       ; " (Double Quote)
+
+HEXDIG         =  DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
+
+HTAB           =  %x09
+                       ; horizontal tab
+
+LF             =  %x0A
+                       ; linefeed
+
+LWSP           =  *(WSP / CRLF WSP)
+                       ; linear white space (past newline)
+
+OCTET          =  %x00-FF
+                       ; 8 bits of data
+
+SP             =  %x20
+
+VCHAR          =  %x21-7E
+                       ; visible (printing) characters
+
+WSP            =  SP / HTAB
+                       ; white space

@@ -19,151 +19,130 @@ defmodule ABNF_Test do
   doctest ABNF.Util
   alias ABNF
   require Logger
-
-  test "sip" do
-    grammar = ABNF.load_file "samples/RFC3261.abnf"
-    data = to_char_list(File.read! "test/resources/sip1.txt")
-    state = %{
-      request: true,
-      method: :register,
-      headers: %{
-        "from" => %{
-          addr: %{
-            hostport: %{host: "biloxi.com", port: 5060},
-            scheme: "sip",
-            userinfo: "bob"
-          },
-          display_name: "Bob "
-        }
-      },
-      uri: %{
-        userinfo: nil,
-        hostport: %{
-          host: "registrar.biloxi.com",
-          port: 1234
-        },
-        scheme: "sip"
-      }
-    }
-    {data, _, '', ^state} = ABNF.apply grammar, "SIP-message", data, %{
-      headers: %{}
-    }
-  end
-
-  test "can reduce rule" do
-    grammar = ABNF.load_file "samples/reduce.abnf"
-    {
-      ['123', 'asd'],
-      %{
-        int: 123,
-        string: "asd"
-      },
-      '',
-      %{field: true}
-    } = ABNF.apply grammar, "composed", '123asd', %{field: false}
-
-  end
-
-  @tag :rfc3966
-  test "teluri" do
-    grammar = ABNF.load_file "samples/RFC3966.abnf"
-
-    tel = 'tel:+1-201-555-0123'
-    {
-      ['tel:', '+1-201-555-0123'], _, '', %{}
-    } = ABNF.apply grammar, "telephone_uri", tel, %{}
-
-
-    tel = 'tel:863-1234;phone-context=+1-914-555'
-    {
-      ['tel:', '863-1234;phone-context=+1-914-555'], _, '', %{}
-    } = ABNF.apply grammar, "telephone_uri", tel, %{}
-  end
-
-  test "sdp" do
-    grammar = ABNF.load_file "samples/RFC4566.abnf"
-    data = to_char_list(File.read! "test/resources/sdp1.txt")
-    {[
-      'v=0\r\n',
-      'o=alice 2890844526 2890844526 IN IP4 host.atlanta.example.com\r\n',
-      's=description\r\n',
-      '',
-      '',
-      '',
-      '',
-      'c=IN IP4 host.atlanta.example.com\r\n',
-      '',
-      't=0 0\r\n',
-      '',
-      '',
-      'm=audio 49170 RTP/AVP 0 8 97\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:97 iLBC/8000\r\nm=video 51372 RTP/AVP 31 32\r\na=rtpmap:31 H261/90000\r\na=rtpmap:32 MPV/90000\r\n'
-      ], _, '', %{
-        version: '0',
-        session_name: 'description',
-        origin: %{
-          username: 'alice',
-          session_id: '2890844526',
-          session_version: '2890844526',
-          net_type: 'IN',
-          address_type: 'IP4',
-          unicast_address: 'host.atlanta.example.com'
-        }
-      }} = ABNF.apply grammar, "session-description", data, %{}
-  end
-
-  test "medium complexity" do
-    grammar = ABNF.load_file "samples/path.abnf"
-    {['s', 'egment'], _, '', ['segment']} =
-      ABNF.apply grammar, "segment", 'segment', []
-
-    {['/', 'a', ''], _, '', ['a']} =
-      ABNF.apply grammar, "path", '/a', []
-
-    {['/', 'aa', '/bb'], _, '', ['aa', 'bb']} =
-      ABNF.apply grammar, "path", '/aa/bb', []
-  end
-
-  test "basic repetition and optional" do
-    grammar = ABNF.load_file "samples/basic.abnf"
-    {['helloworld'], _, ' rest', nil} =
-      ABNF.apply grammar, "string1", 'helloworld rest', nil
-
-    {['hel'], _, 'loworld rest', nil} =
-      ABNF.apply grammar, "string2", 'helloworld rest', nil
-
-    {['he'], _, 'lloworld rest', nil} =
-      ABNF.apply grammar, "string3", 'helloworld rest', nil
-
-    {['helloworld'], _, ' rest', nil} =
-      ABNF.apply grammar, "string4", 'helloworld rest', nil
-
-    {['3', 'helloworld'], _, ' rest', nil} =
-      ABNF.apply grammar, "string5", '3helloworld rest', nil
-
-    {['3', 'helloworld'], _, ' rest', nil} =
-      ABNF.apply grammar, "string5", '3helloworld rest', nil
-
-    {['', 'helloworld'], _, ' rest', nil} =
-      ABNF.apply grammar, "string5", 'helloworld rest', nil
-  end
+  alias ABNF.CaptureResult, as: Res
 
   test "ipv4" do
-    grammar = ABNF.load_file "samples/ipv4.abnf"
+    grammar = load "ipv4"
 
-    {['1', '.', '2', '.', '3', '.', '4'], _, 'rest', %{ipv4address: '1.2.3.4'}} =
-      ABNF.apply grammar, "ipv4address", '1.2.3.4rest', %{}
+    %Res{
+      input: '1.2.3.4rest',
+      rest: 'rest',
+      string_text: '1.2.3.4',
+      string_tokens: ['1', '.', '2', '.', '3', '.', '4'],
+      state: %{ipv4address: '1.2.3.4'},
+      values: ["Your ip address is: 1.2.3.4"]
+    } = ABNF.apply grammar, "ipv4address", '1.2.3.4rest', %{}
 
-    {['192', '.', '168', '.', '0', '.', '1'], _, 'rest', %{ipv4address: '192.168.0.1'}} =
-      ABNF.apply grammar, "ipv4address", '192.168.0.1rest', %{}
+    %Res{
+      input: '192.168.0.1rest',
+      rest: 'rest',
+      string_text: '192.168.0.1',
+      string_tokens: ['192', '.', '168', '.', '0', '.', '1'],
+      state: %{ipv4address: '192.168.0.1'},
+      values: ["Your ip address is: 192.168.0.1"]
+    } = ABNF.apply grammar, "ipv4address", '192.168.0.1rest', %{}
 
-    {['255', '.', '255', '.', '255', '.', '255'], _, 'rest', %{ipv4address: '255.255.255.255'}} =
-      ABNF.apply grammar, "ipv4address", '255.255.255.255rest', %{}
+    %Res{
+      input: '255.255.255.255rest',
+      rest: 'rest',
+      string_text: '255.255.255.255',
+      string_tokens: ['255', '.', '255', '.', '255', '.', '255'],
+      state: %{ipv4address: '255.255.255.255'},
+      values: ["Your ip address is: 255.255.255.255"]
+    } = ABNF.apply grammar, "ipv4address", '255.255.255.255rest', %{}
 
     nil = ABNF.apply grammar, "ipv4address", '255.255.256.255rest', %{}
   end
 
+  test "medium complexity" do
+    grammar = load "path"
+    %Res{
+      input: 'segment',
+      rest: '',
+      string_text: 'segment',
+      string_tokens: ['s', 'egment'],
+      state: ['segment'],
+      values: _
+    } = ABNF.apply grammar, "segment", 'segment', []
+
+    %Res{
+      input: '/a',
+      rest: '',
+      string_text: '/a',
+      string_tokens: ['/a'],
+      state: ['a'],
+      values: _
+    } = ABNF.apply grammar, "path", '/a', []
+
+    %Res{
+      input: '/aa/bb',
+      rest: '',
+      string_text: '/aa/bb',
+      string_tokens: ['/aa/bb'],
+      state: ['aa', 'bb'],
+      values: _
+    } = ABNF.apply grammar, "path", '/aa/bb', []
+  end
+
+  test "basic repetition and optional" do
+    grammar = load "basic"
+    %Res{
+      input: 'helloworld rest',
+      rest: ' rest',
+      string_text: 'helloworld',
+      string_tokens: ['helloworld'],
+      state: nil,
+      values: _
+    } = ABNF.apply grammar, "string1", 'helloworld rest', nil
+
+    %Res{
+      input: 'helloworld rest',
+      rest: 'loworld rest',
+      string_text: 'hel',
+      string_tokens: ['hel'],
+      state: nil,
+      values: _
+    } = ABNF.apply grammar, "string2", 'helloworld rest', nil
+
+    %Res{
+      input: 'helloworld rest',
+      rest: 'lloworld rest',
+      string_text: 'he',
+      string_tokens: ['he'],
+      state: nil,
+      values: _
+    } = ABNF.apply grammar, "string3", 'helloworld rest', nil
+
+    %Res{
+      input: 'helloworld rest',
+      rest: ' rest',
+      string_text: 'helloworld',
+      string_tokens: ['helloworld'],
+      state: nil,
+      values: _
+    } = ABNF.apply grammar, "string4", 'helloworld rest', nil
+
+    %Res{
+      input: '3helloworld rest',
+      rest: ' rest',
+      string_text: '3helloworld',
+      string_tokens: ['3', 'helloworld'],
+      state: nil,
+      values: _
+    } = ABNF.apply grammar, "string5", '3helloworld rest', nil
+
+    %Res{
+      input: 'helloworld rest',
+      rest: ' rest',
+      string_text: 'helloworld',
+      string_tokens: ['', 'helloworld'],
+      state: nil,
+      values: _
+    } = ABNF.apply grammar, "string5", 'helloworld rest', nil
+  end
+
   test "ipv6" do
-    grammar = ABNF.load_file "samples/ipv6.abnf"
+    grammar = load "ipv6"
 
     addresses = [
       '::',
@@ -366,19 +345,23 @@ defmodule ABNF_Test do
 
     Enum.each addresses, fn(a) ->
       Logger.debug "Testing IPv6: #{inspect a}"
-      {ret, _, 'rest', %{}} = ABNF.apply grammar, "ipv6address", a ++ 'rest', %{}
-      ^a = :lists.flatten ret
+      string = a ++ 'rest'
+      %Res{
+        input: ^string,
+        rest: 'rest',
+        string_text: ^a,
+        state: %{}
+      } = ABNF.apply grammar, "ipv6address", string, %{}
     end
-
   end
 
   test "uri" do
-    grammar = ABNF.load_file "samples/RFC3986.abnf"
+    grammar = load "RFC3986"
     url = 'http://user:pass@host.com:421/some/path?k1=v1&k2=v2#one_fragment'
-    {
-      ['http', ':', '//user:pass@host.com:421/some/path', '?k1=v1&k2=v2', '#one_fragment'],
-      _, '',
-      %{
+    %Res{
+      input: ^url,
+      rest: '',
+      state: %{
         fragment: 'one_fragment',
         host: 'host.com',
         host_type: :reg_name,
@@ -388,141 +371,314 @@ defmodule ABNF_Test do
         userinfo: 'user:pass',
         segments: ['some', 'path'],
         type: :abempty
-      }
+      },
+      string_text: ^url,
+      string_tokens: [
+        'http',
+        ':',
+        '//user:pass@host.com:421/some/path',
+        '?k1=v1&k2=v2',
+        '#one_fragment'
+      ],
+      values: _
     } = ABNF.apply grammar, "uri", url, %{segments: []}
 
     url = 'http:/path'
-    {
-      ['http', ':', '/path', '', ''],
-      _, '',
-      %{
+    %Res{
+      input: ^url,
+      rest: '',
+      state: %{
         scheme: 'http',
         segments: ['path'],
         type: :absolute
-      }
+      },
+      string_text: ^url,
+      string_tokens: ['http', ':', '/path', '', ''],
+      values: _
     } = ABNF.apply grammar, "uri", url, %{segments: []}
 
     url = 'http://a.com'
-    {
-      ['http', ':', '//a.com', '', ''],
-      _, '',
-      %{
+    %Res{
+      input: ^url,
+      rest: '',
+      state: %{
         scheme: 'http',
         host: 'a.com',
         host_type: :reg_name,
-        segments: [],
         type: :abempty
-      }
+      },
+      string_text: ^url,
+      string_tokens: ['http', ':', '//a.com', '', ''],
+      values: _
     } = ABNF.apply grammar, "uri", url, %{segments: []}
 
     url = 'http://a.com:789'
-    {
-      ['http', ':', '//a.com:789', '', ''],
-      _, '',
-      %{
+    %Res{
+      input: ^url,
+      rest: '',
+      state: %{
         scheme: 'http',
         host: 'a.com',
         port: '789',
         host_type: :reg_name,
-        segments: [],
         type: :abempty
-      }
+      },
+      string_text: ^url,
+      string_tokens: ['http', ':', '//a.com:789', '', ''],
+      values: _
     } = ABNF.apply grammar, "uri", url, %{segments: []}
 
     url = 'http://192.168.0.1/path'
-    {
-      ['http', ':', '//192.168.0.1/path', '', ''],
-      _, '',
-      %{
+    %Res{
+      input: ^url,
+      rest: '',
+      state: %{
         scheme: 'http',
+        segments: ['path'],
         host: '192.168.0.1',
         host_type: :ipv4,
-        segments: ['path'],
         type: :abempty
-      }
+      },
+      string_text: ^url,
+      string_tokens: ['http', ':', '//192.168.0.1/path', '', ''],
+      values: _
     } = ABNF.apply grammar, "uri", url, %{segments: []}
 
     url = 'http:'
-    {
-      ['http', ':', '', '', ''],
-      _, '',
-      %{
+    %Res{
+      input: ^url,
+      rest: '',
+      state: %{
         scheme: 'http',
-        segments: [],
         type: :empty
-      }
+      },
+      string_text: ^url,
+      string_tokens: ['http', ':', '', '', ''],
+      values: _
     } = ABNF.apply grammar, "uri", url, %{segments: []}
 
     url = 'http:path1/path2'
-    {
-      ['http', ':', 'path1/path2', '', ''],
-      _, '',
-      %{
+    %Res{
+      input: ^url,
+      rest: '',
+      state: %{
         scheme: 'http',
         segments: ['path1', 'path2'],
         type: :rootless
-      }
+      },
+      string_text: ^url,
+      string_tokens: ['http', ':', 'path1/path2', '', ''],
+      values: _
     } = ABNF.apply grammar, "uri", url, %{segments: []}
 
-
     url = 'http://[v1.fe80::a+en1]/path'
-    {
-      ['http', ':', '//[v1.fe80::a+en1]/path', '', ''],
-      _, '',
-      %{
+    %Res{
+      input: ^url,
+      rest: '',
+      state: %{
         scheme: 'http',
+        segments: ['path'],
         host: '[v1.fe80::a+en1]',
         host_type: :ipvfuture,
-        segments: ['path'],
         type: :abempty
-      }
+      },
+      string_text: ^url,
+      string_tokens: ['http', ':', '//[v1.fe80::a+en1]/path', '', ''],
+      values: _
     } = ABNF.apply grammar, "uri", url, %{segments: []}
   end
 
+  test "can reduce rule" do
+    grammar = load "reduce"
+    %Res{
+      input: '123asd',
+      rest: '',
+      state: %{field: true},
+      string_text: '123asd',
+      string_tokens: ['123', 'asd'],
+      values: [%{int: 123, string: "asd"}]
+    } = ABNF.apply grammar, "composed", '123asd', %{field: false}
+  end
+
+  test "teluri" do
+    grammar = load "RFC3966"
+
+    tel = 'tel:+1-201-555-0123'
+    %Res{
+      input: 'tel:+1-201-555-0123',
+      rest: '',
+      state: %{},
+      string_text: 'tel:+1-201-555-0123',
+      string_tokens: ['tel:', '+1-201-555-0123'],
+      values: _
+    } = ABNF.apply grammar, "telephone-uri", tel, %{}
+
+    tel = 'tel:863-1234;phone-context=+1-914-555'
+    %Res{
+      input: 'tel:863-1234;phone-context=+1-914-555',
+      rest: '',
+      state: %{},
+      string_text: 'tel:863-1234;phone-context=+1-914-555',
+      string_tokens: ['tel:', '863-1234;phone-context=+1-914-555'],
+      values: _
+    } = ABNF.apply grammar, "telephone-uri", tel, %{}
+  end
+
+  test "sdp" do
+    grammar = load "RFC4566"
+    data = to_char_list(File.read! "test/resources/sdp1.txt")
+    %Res{
+      input: ^data,
+      rest: '',
+      state: %{
+        version: '0',
+        session_name: 'description',
+        origin: %{
+          username: 'alice',
+          session_id: '2890844526',
+          session_version: '2890844526',
+          net_type: 'IN',
+          address_type: 'IP4',
+          unicast_address: 'host.atlanta.example.com'
+        }
+      },
+      string_text: ^data,
+      string_tokens: [
+        'v=0\r\n',
+        'o=alice 2890844526 2890844526 IN IP4 host.atlanta.example.com\r\n',
+        's=description\r\n',
+        '',
+        '',
+        '',
+        '',
+        'c=IN IP4 host.atlanta.example.com\r\n',
+        '',
+        't=0 0\r\n',
+        '',
+        '',
+        'm=audio 49170 RTP/AVP 0 8 97\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:97 iLBC/8000\r\nm=video 51372 RTP/AVP 31 32\r\na=rtpmap:31 H261/90000\r\na=rtpmap:32 MPV/90000\r\n'
+      ],
+      values: _
+      } = ABNF.apply grammar, "session-description", data, %{}
+  end
+
+  test "sip" do
+    grammar = load "RFC3261"
+    data = to_char_list(File.read! "test/resources/sip1.txt")
+    %Res{
+      input: ^data,
+      rest: '',
+      state: %{
+        headers: %{
+          "from" => %{
+            addr: %{
+              hostport: %{host: "biloxi.com", port: 5060},
+              scheme: "sip",
+              userinfo: "bob"
+            },
+            display_name: "Bob "
+          }
+        },
+        method: :register,
+        request: true,
+        uri: %{
+          hostport: %{
+            host: "registrar.biloxi.com",
+            port: 1234
+          },
+          userinfo: "",
+          scheme: "sip"
+        }
+      },
+      string_text: ^data,
+      string_tokens: [^data]
+    } = ABNF.apply grammar, "SIP-message", data, %{
+      headers: %{}
+    }
+  end
+
   test "email" do
-    grammar = ABNF.load_file "samples/RFC5322-no-obs.abnf"
+    grammar = load "RFC5322-no-obs"
 
-    {['user@domain.com'], _, '', %{
-      domain: 'domain.com',
-      local_part: 'user'
-    }} = ABNF.apply grammar, "mailbox", 'user@domain.com', %{}
+    email = 'user@domain.com'
+    %Res{
+      input: ^email,
+      rest: '',
+      state: %{
+        domain: 'domain.com',
+        local_part: 'user'
+      },
+      string_text: ^email,
+      string_tokens: ['user@domain.com'],
+      values: _
+    } = ABNF.apply grammar, "mailbox", email, %{}
 
-    {['<user@domain.com>'], _, '', %{
-      domain: 'domain.com',
-      local_part: 'user'
-    }} = ABNF.apply grammar, "mailbox", '<user@domain.com>', %{}
+    email = '<user@domain.com>'
+    %Res{
+      input: ^email,
+      rest: '',
+      state: %{
+        domain: 'domain.com',
+        local_part: 'user'
+      },
+      string_text: ^email,
+      string_tokens: ['<user@domain.com>'],
+      values: _
+    } = ABNF.apply grammar, "mailbox", email, %{}
 
-    {['Peter Cantropus <user@domain.com>'], _, '', %{
-      domain: 'domain.com',
-      local_part: 'user',
-      display_name: 'Peter Cantropus '
-    }} = ABNF.apply grammar, "mailbox", 'Peter Cantropus <user@domain.com>', %{}
+    email = 'Peter Cantropus <user@domain.com>'
+    %Res{
+      input: ^email,
+      rest: '',
+      state: %{
+        domain: 'domain.com',
+        local_part: 'user',
+        display_name: 'Peter Cantropus '
+      },
+      string_text: ^email,
+      string_tokens: ['Peter Cantropus <user@domain.com>'],
+      values: _
+    } = ABNF.apply grammar, "mailbox", email, %{}
 
-    {['Peter Cantropus <user@domain.com>'], _, '', %{
-      domain: 'domain.com',
-      local_part: 'user',
-      display_name: 'Peter Cantropus '
-    }} = ABNF.apply grammar, "mailbox", 'Peter Cantropus <user@domain.com>', %{}
+    input = '21 Nov 1997 10:01:22 -0600'
+    %Res{
+      input: ^input,
+      rest: '',
+      state: %{
+        month: 'Nov',
+        year: '1997',
+        day: '21',
+        tz: '-0600',
+        hour: '10',
+        minute: '01',
+        second: '22'
+      },
+      string_text: ^input,
+      string_tokens: [[], '21 Nov 1997 ', '10:01:22 -0600', []],
+      values: _
+    } = ABNF.apply grammar, "date-time", input, %{}
 
-    {[[], '21 Nov 1997 ', '10:01:22 -0600', []], _, '', %{
-      month: 'Nov',
-      year: '1997',
-      day: '21',
-      tz: '-0600',
-      hour: '10',
-      minute: '01',
-      second: '22'
-    }} = ABNF.apply grammar, "date_time", '21 Nov 1997 10:01:22 -0600', %{}
+    input = 'Received: from node.example by x.y.test; 21 Nov 1997 10:01:22 -0600\r\n'
+    %Res{
+      input: ^input,
+      rest: '',
+      state: %{
+        day: '21',
+        domain: 'x.y.test',
+        hour: '10',
+        minute: '01',
+        month: 'Nov',
+        second: '22',
+        tz: '-0600',
+        year: '1997'
+      },
+      string_text: ^input,
+      string_tokens: ['Received:', ' from node.example by x.y.test', ';', ' 21 Nov 1997 10:01:22 -0600', '\r\n'],
+      values: _
+    } = ABNF.apply grammar, "Received", input, %{}
+  end
 
-    {['Received:', ' from node.example by x.y.test', ';', ' 21 Nov 1997 10:01:22 -0600', '\r\n'], _, '', %{
-      day: '21',
-      domain: 'x.y.test',
-      hour: '10',
-      minute: '01',
-      month: 'Nov',
-      second: '22',
-      tz: '-0600',
-      year: '1997'
-    }} = ABNF.apply grammar, "Received", 'Received: from node.example by x.y.test; 21 Nov 1997 10:01:22 -0600\r\n', %{}
+  defp load(file) do
+    ABNF.load_file "test/resources/#{file}.abnf"
   end
 end
