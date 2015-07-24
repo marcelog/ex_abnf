@@ -1,6 +1,6 @@
 defmodule ABNF.CaptureResult do
   @moduledoc """
-  Capture result, used when returning a result after applying a gramamr to an
+  Capture result, used when returning a result after applying a grammar to an
   input.
 
       Copyright 2015 Marcelo Gornstein <marcelog@gmail.com>
