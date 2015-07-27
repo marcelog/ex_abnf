@@ -19,7 +19,6 @@ defmodule ABNF.Grammar do
 
   alias ABNF.Core, as: Core
   alias ABNF.Util, as: Util
-
   @type t :: Map
 
   # rulelist = 1*( rule / (*WSP c-nl) )
@@ -393,14 +392,18 @@ defmodule ABNF.Grammar do
     case input do
       [char|rest] ->
         if((char >= 0x20 and char <= 0x21) or (char >= 0x23 and char <= 0x7E)) do
-          char_val_tail rest, [char|acc]
+          escape = not (Core.alpha?(char) or Core.digit?(char))
+          if escape do
+            char_val_tail rest, [char, 92|acc]
+          else
+            char_val_tail rest, [char|acc]
+          end
         else
           if Core.dquote? char do
-            s = String.downcase to_string(Enum.reverse(acc))
+            {:ok, r} = :re.compile [?(, ?^, Enum.reverse(acc), ?)], [:caseless]
             {
               token(:char_val, %{
-                string: s,
-                length: String.length(s)
+                regex: r
               }),
               rest
             }

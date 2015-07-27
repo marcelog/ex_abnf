@@ -51,7 +51,7 @@ defmodule ABNF.Interpreter do
   end
 
   defp parse_real(
-    grammar, e = %{element: :rule, value: a}, input, state
+    grammar, e = %{element: :rule, value: a, code: c}, input, state
   ) do
     case parse_real grammar, a, input, state do
       nil -> nil
@@ -62,11 +62,11 @@ defmodule ABNF.Interpreter do
         r_state,
         r_rest
       } ->
-        if is_nil e[:code] do
+        if is_nil c do
           r
         else
           try do
-            case Code.eval_string e.code, [
+            case Code.eval_string c, [
               {:state, r_state},
               {:rule, r_string_text},
               {:string_values, r_string_tokens},
@@ -109,8 +109,8 @@ defmodule ABNF.Interpreter do
   defp parse_real(
     grammar, %{element: :alternation, value: alternation}, input, state
   ) do
-    r = Enum.reduce alternation, nil, fn(e, acc) ->
-      case concatenation grammar, e.value, input, state, {
+    r = Enum.reduce alternation, nil, fn(%{value: value}, acc) ->
+      case concatenation grammar, value, input, state, {
         [],
         [],
         [],
@@ -173,21 +173,18 @@ defmodule ABNF.Interpreter do
   end
 
   defp parse_real(
-    _grammar, %{element: :char_val, value: %{length: l, string: string}},
+    _grammar, %{element: :char_val, value: %{regex: r}},
     input, state
   ) do
-    {s1, rest} = Enum.split input, l
-    s1s = String.downcase to_string(s1)
-    if s1s === string do
-      {
+    case :re.split input, r, [{:return, :list}, {:parts, 2}] do
+      ['', s1, rest] -> {
         s1,
         [s1],
         [s1],
         state,
         rest
       }
-    else
-      nil
+      _ -> nil
     end
   end
 
@@ -205,7 +202,7 @@ defmodule ABNF.Interpreter do
   end
 
   defp parse_real(grammar, %{element: :rulename, value: e}, input, state) do
-    value = Map.get grammar, e
+    {:ok, value} = :maps.find e, grammar
     if is_nil value do
       raise ArgumentError, "Rule #{e} not found in #{Map.keys(grammar)}"
     end
@@ -232,7 +229,7 @@ defmodule ABNF.Interpreter do
   defp num_concat(list, input, acc \\ [])
 
   defp num_concat([], input, acc) do
-    match = Enum.reverse acc
+    match = :lists.reverse acc
     {match, input}
   end
 
@@ -293,12 +290,9 @@ defmodule ABNF.Interpreter do
     end
   end
 
-  defp concatenation(_grammar, [], _input, _state, acc) do
-    prep_result acc
-  end
-
   defp concatenation(
-    grammar, [c|cs], input, state, acc, next_match \\ nil
+    grammar, [c = %{value: value = %{from: from}}|cs],
+    input, state, acc, next_match \\ nil
   ) do
     r = if is_nil next_match do
       parse_real grammar, c, input, state
@@ -329,9 +323,9 @@ defmodule ABNF.Interpreter do
           nil ->
             match_length = length r_string_tokens
             to = match_length - 1
-            if to > 0 and to >= c.value.from do
-              c_val = Map.put c.value, :to, to
-              c = Map.put c, :value, c_val
+            if to > 0 and to >= from do
+              c_val = :maps.put :to, to, value
+              c = :maps.put :value, c_val, c
 
               [h_string_tokens|t_string_tokens] = r_string_tokens
               string_tokens = t_string_tokens
@@ -339,7 +333,7 @@ defmodule ABNF.Interpreter do
               [_h_values|t_values] = r_values
               values = t_values
 
-              rest = h_string_tokens ++ r_rest
+              rest = :lists.append h_string_tokens, r_rest
               r = {
                 string_tokens,
                 string_tokens,
@@ -349,7 +343,7 @@ defmodule ABNF.Interpreter do
               }
               concatenation grammar, [c|cs], input, state, acc, r
             else
-              if c.value.from === 0 do
+              if from === 0 do
                 r = {
                   '',
                   [],
@@ -398,9 +392,9 @@ defmodule ABNF.Interpreter do
     r_rest
   }) do
     {
-      :lists.flatten(Enum.reverse(r_string_text)),
-      (for t <- Enum.reverse(r_string_tokens), do: :lists.flatten(t)),
-      Enum.reverse(r_values),
+      :lists.flatten(:lists.reverse(r_string_text)),
+      (for t <- :lists.reverse(r_string_tokens), do: :lists.flatten(t)),
+      :lists.reverse(r_values),
       r_state,
       r_rest
     }
@@ -419,11 +413,11 @@ defmodule ABNF.Interpreter do
     _acc_state,
     _acc_rest
   }) do
-    m = Enum.reverse r_string_text
+    m = :lists.reverse r_string_text
     {
       [m|acc_string_text],
       [m|acc_string_tokens],
-      [Enum.reverse(r_values)|acc_values],
+      [:lists.reverse(r_values)|acc_values],
       r_state,
       r_rest
     }
