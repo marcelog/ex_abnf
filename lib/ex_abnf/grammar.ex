@@ -388,22 +388,24 @@ defmodule ABNF.Grammar do
     end
   end
 
-  defp char_val_tail(input, acc \\ []) do
+  defp char_val_tail(input, acc \\ {0, []}) do
+    {l, acc_char} = acc
     case input do
       [char|rest] ->
         if((char >= 0x20 and char <= 0x21) or (char >= 0x23 and char <= 0x7E)) do
           escape = not (Core.alpha?(char) or Core.digit?(char))
           if escape do
-            char_val_tail rest, [char, 92|acc]
+            char_val_tail rest, {l + 1, [char, 92|acc_char]}
           else
-            char_val_tail rest, [char|acc]
+            char_val_tail rest, {l + 1, [char|acc_char]}
           end
         else
           if Core.dquote? char do
-            {:ok, r} = :re.compile [?(, ?^, Enum.reverse(acc), ?)], [:caseless]
+            {:ok, r} = :re.compile [?^, Enum.reverse(acc_char)], [:caseless]
             {
               token(:char_val, %{
-                regex: r
+                regex: r,
+                length: l
               }),
               rest
             }

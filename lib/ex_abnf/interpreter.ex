@@ -109,47 +109,7 @@ defmodule ABNF.Interpreter do
   defp parse_real(
     grammar, %{element: :alternation, value: alternation}, input, state
   ) do
-    r = Enum.reduce alternation, nil, fn(%{value: value}, acc) ->
-      case concatenation grammar, value, input, state, {
-        [],
-        [],
-        [],
-        state,
-        input
-      } do
-        nil -> acc
-        r = {
-          r_string_text,
-          _r_string_tokens,
-          _r_values,
-          _r_state,
-          _r_rest
-        } -> case acc do
-          nil -> {:erlang.iolist_size(r_string_text), r}
-          {last_l, _last_r} ->
-            l = :erlang.iolist_size r_string_text
-            if last_l >= l do
-              acc
-            else
-              {l, r}
-            end
-        end
-      end
-    end
-    case r do
-      nil -> nil
-      {_, r} -> r
-    end
-  end
-
-  defp parse_real(grammar, e = %{element: :repetition}, input, state) do
-    repetition grammar, e, input, state, {
-      [],
-      [],
-      [],
-      state,
-      input
-    }
+    run_concs grammar, alternation, input, state, nil
   end
 
   defp parse_real(
@@ -173,17 +133,18 @@ defmodule ABNF.Interpreter do
   end
 
   defp parse_real(
-    _grammar, %{element: :char_val, value: %{regex: r}},
-    input, state
+    _grammar, %{element: :char_val, value: %{regex: r, length: l}}, input, state
   ) do
-    case :re.split input, r, [{:return, :list}, {:parts, 2}] do
-      ['', s1, rest] -> {
-        s1,
-        [s1],
-        [s1],
-        state,
-        rest
-      }
+    case :re.run input, r do
+      {:match, _} ->
+        {s1, rest} = :lists.split l, input
+        {
+          s1,
+          [s1],
+          [s1],
+          state,
+          rest
+        }
       _ -> nil
     end
   end
@@ -295,7 +256,13 @@ defmodule ABNF.Interpreter do
     input, state, acc, next_match \\ nil
   ) do
     r = if is_nil next_match do
-      parse_real grammar, c, input, state
+      repetition grammar, c, input, state, {
+        [],
+        [],
+        [],
+        state,
+        input
+      }
     else
       next_match
     end
@@ -328,16 +295,13 @@ defmodule ABNF.Interpreter do
               c = :maps.put :value, c_val, c
 
               [h_string_tokens|t_string_tokens] = r_string_tokens
-              string_tokens = t_string_tokens
-
               [_h_values|t_values] = r_values
-              values = t_values
 
               rest = :lists.append h_string_tokens, r_rest
               r = {
-                string_tokens,
-                string_tokens,
-                values,
+                t_string_tokens,
+                t_string_tokens,
+                t_values,
                 r_state,
                 rest
               }
@@ -384,6 +348,43 @@ defmodule ABNF.Interpreter do
     end
   end
 
+  defp run_concs(_grammar, [], _input, _state, acc) do
+    case acc do
+      nil -> nil
+      {_, r} -> r
+    end
+  end
+
+  defp run_concs(grammar, [%{value: value}|concs], input, state, acc) do
+    case concatenation grammar, value, input, state, {
+      [],
+      [],
+      [],
+      state,
+      input
+    } do
+      nil -> run_concs grammar, concs, input, state, acc
+      r = {
+        r_string_text,
+        _r_string_tokens,
+        _r_values,
+        _r_state,
+        _r_rest
+      } -> case acc do
+        nil ->
+          l = :erlang.iolist_size r_string_text
+          run_concs grammar, concs, input, state, {l, r}
+        {last_l, _last_r} ->
+          l = :erlang.iolist_size r_string_text
+          if last_l >= l do
+            run_concs grammar, concs, input, state, acc
+          else
+            run_concs grammar, concs, input, state, {l, r}
+          end
+      end
+    end
+  end
+
   defp prep_result({
     r_string_text,
     r_string_tokens,
@@ -393,8 +394,8 @@ defmodule ABNF.Interpreter do
   }) do
     {
       :lists.flatten(:lists.reverse(r_string_text)),
-      (for t <- :lists.reverse(r_string_tokens), do: :lists.flatten(t)),
-      :lists.reverse(r_values),
+      :lists.map(&:lists.flatten/1, :lists.reverse(r_string_tokens)),
+      :lists.reverse(:lists.map(&:lists.reverse/1, r_values)),
       r_state,
       r_rest
     }
@@ -417,7 +418,7 @@ defmodule ABNF.Interpreter do
     {
       [m|acc_string_text],
       [m|acc_string_tokens],
-      [:lists.reverse(r_values)|acc_values],
+      [r_values|acc_values],
       r_state,
       r_rest
     }
