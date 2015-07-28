@@ -49,7 +49,7 @@ To use it in your Mix projects, first add it as a dependency:
 
 ```elixir
 def deps do
-  [{:ex_abnf, "~> 0.2.1"}]
+  [{:ex_abnf, "~> 0.2.2"}]
 end
 ```
 Then run mix deps.get to install it.
@@ -62,6 +62,9 @@ userinfo      = *( unreserved / pct-encoded / sub-delims / ":" ) !!!
   {:ok, state}
 !!!
 ```
+
+The code in question will be packed together into a module that is created in
+runtime to speed up execution later on.
 
 Your code can return:
  * **{:ok, state}**: The match continues, and the new state is used for
