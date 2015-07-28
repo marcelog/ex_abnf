@@ -66,20 +66,18 @@ defmodule ABNF.Interpreter do
           r
         else
           try do
-            case Code.eval_string c, [
-              {:state, r_state},
-              {:rule, r_string_text},
-              {:string_values, r_string_tokens},
-              {:values, r_values}
-            ], __ENV__ do
-              {{:ok, state}, _} -> {
+            {m, f, _} = c
+            case :erlang.apply m, f, [
+              r_state, r_string_text, r_string_tokens, r_values
+            ] do
+              {:ok, state} -> {
                 r_string_text,
                 r_string_tokens,
                 r_values,
                 state,
                 r_rest
               }
-              {{:ok, state, val}, _} -> {
+              {:ok, state, val} -> {
                 r_string_text,
                 r_string_tokens,
                 [val],

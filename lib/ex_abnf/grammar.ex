@@ -33,7 +33,42 @@ defmodule ABNF.Grammar do
       nil ->
         rest = zero_or_more_wsp input
         case c_nl rest do
-          nil -> {acc, input}
+          nil ->
+            module_name = String.to_atom(
+              "A#{Base.encode16 :crypto.hash(
+                :md5, :erlang.term_to_binary(make_ref)
+              )}"
+            )
+
+            acc = Enum.reduce acc, %{}, fn({k, v}, rules) ->
+              c = if is_nil v[:code] do
+                nil
+              else
+                fun_name = String.to_atom(
+                  String.downcase("A#{Base.encode16 :crypto.hash(
+                    :md5, :erlang.term_to_binary(make_ref)
+                  )}"
+                ))
+                {module_name, fun_name, v[:code]}
+              end
+              v = %{v | code: c}
+              Map.put rules, k, v
+            end
+
+            funs = Enum.reduce acc, "", fn({_k, v}, str) ->
+              if is_nil v[:code] do
+                str
+              else
+                {_, f, c} = v[:code]
+                str = str <> "def #{f}(state, rule, string_tokens, values) do\r\n"
+                str = str <> "\t#{c}\r\n"
+                str = str <> "end\r\n"
+                str
+              end
+            end
+            funs = Code.string_to_quoted(funs)
+            Module.create module_name, funs, Macro.Env.location(__ENV__)
+            {acc, input}
           {comments, rest} -> case last do
             nil -> rulelist rest, acc
             last ->

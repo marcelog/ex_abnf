@@ -14,12 +14,10 @@
 # limitations under the License.
 ################################################################################
 defmodule ABNF_Test do
-  use ExUnit.Case
-  doctest ABNF
-  doctest ABNF.Util
-  alias ABNF
-  require Logger
   alias ABNF.CaptureResult, as: Res
+  use ExUnit.Case, async: true
+  require Logger
+  @on_load :init
 
   test "ipv4" do
     grammar = load "ipv4"
@@ -678,7 +676,41 @@ defmodule ABNF_Test do
     } = ABNF.apply grammar, "Received", input, %{}
   end
 
+  # Load grammars before tests are run
+  def init() do
+    me = self
+    spawn fn ->
+      :ets = :ets.new :ets, [:named_table, :public, {:read_concurrency, true}]
+      for t <- [
+        "ipv4",
+        "ipv6",
+        "path",
+        "reduce",
+        "basic",
+        "RFC3261",
+        "RFC3966",
+        "RFC3986",
+        "RFC4566",
+        "RFC5322-no-obs"
+      ] do
+        :ets.insert_new(
+          :ets, {t, ABNF.load_file("test/resources/#{t}.abnf")}
+        )
+        :timer.sleep 1
+      end
+      send me, :done
+      receive do
+        _ -> :ok
+      end
+    end
+    receive do
+      :done -> :ok
+    end
+    :ok
+  end
+
   defp load(file) do
-    ABNF.load_file "test/resources/#{file}.abnf"
+    [{^file, grammar}] = :ets.lookup :ets, file
+    grammar
   end
 end
