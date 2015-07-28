@@ -49,7 +49,7 @@ To use it in your Mix projects, first add it as a dependency:
 
 ```elixir
 def deps do
-  [{:ex_abnf, "~> 0.2.3"}]
+  [{:ex_abnf, "~> 0.2.4"}]
 end
 ```
 Then run mix deps.get to install it.
@@ -92,6 +92,39 @@ And your code will be called with the following bindings:
  * **string_values**: Just like `values` but each value is a nested list of
  lists with all the characters that matched (you will usually want to flatten
  the list to get each one of the full strings).
+
+## Adding helper code
+You can also start your grammar with code to write your own helper functions and
+module additions. For example:
+```
+!!!
+require Logger
+def return_value(ip) do
+  Logger.debug "Hello world"
+  "Your ip address is: #{ip}"
+end
+!!!
+
+IPv4address =
+  dec-octet "."
+  dec-octet "."
+  dec-octet "."
+  dec-octet !!!
+    state = Map.put state, :ipv4address, rule
+    {:ok, state, return_value(rule)}
+  !!!
+
+dec-octet = DIGIT         ; 0-9
+  / %x31-39 DIGIT         ; 10-99
+  / "1" 2DIGIT            ; 100-199
+  / "2" %x30-34 DIGIT     ; 200-249
+  / "25" %x30-35          ; 250-255
+
+DIGIT = %x30-39
+```
+
+Note how the result of the `IPv4address` rule is the result of a call to the
+function `return_value`.
 
 ## TODO
  * Implement [RFC7405](https://tools.ietf.org/html/rfc7405)

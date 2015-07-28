@@ -27,8 +27,16 @@ defmodule ABNF.Grammar do
   Builds a Grammar.t from the given input (an ABNF text grammar). You should
   never use this one directly but use the ones in the ABNF module instead.
   """
-  @spec rulelist(char_list, t, Map) :: t
-  def rulelist(input, acc \\ %{}, last \\ nil) do
+  @spec rulelist(char_list) :: t
+  def rulelist(input) do
+    {module_code, rest} = case code input do
+      nil -> {"", input}
+      {c, rest} -> {to_string(c), rest}
+    end
+    rulelist_tail module_code, rest
+  end
+
+  defp rulelist_tail(module_code, input, acc \\ %{}, last \\ nil) do
     case rule input do
       nil ->
         rest = zero_or_more_wsp input
@@ -55,7 +63,7 @@ defmodule ABNF.Grammar do
               Map.put rules, k, v
             end
 
-            funs = Enum.reduce acc, "", fn({_k, v}, str) ->
+            funs = Enum.reduce acc, module_code, fn({_k, v}, str) ->
               if is_nil v[:code] do
                 str
               else
@@ -70,13 +78,13 @@ defmodule ABNF.Grammar do
             Module.create module_name, funs, Macro.Env.location(__ENV__)
             {acc, input}
           {comments, rest} -> case last do
-            nil -> rulelist rest, acc
+            nil -> rulelist_tail module_code, rest, acc
             last ->
               last = add_comments last, comments
-              rulelist rest, Map.put(acc, last.name, last)
+              rulelist_tail module_code, rest, Map.put(acc, last.name, last)
           end
         end
-      {r, rest} -> rulelist rest, Map.put(acc, r.name, r)
+      {r, rest} -> rulelist_tail module_code, rest, Map.put(acc, r.name, r)
     end
   end
 

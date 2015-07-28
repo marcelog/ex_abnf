@@ -19,6 +19,18 @@ defmodule ABNF_Test do
   require Logger
   @on_load :init
 
+  test "can write module code" do
+    grammar = load "module_code"
+    %Res{
+      input: '1.2.3.4rest',
+      rest: 'rest',
+      string_text: '1.2.3.4',
+      string_tokens: ['1', '.', '2', '.', '3', '.', '4'],
+      state: %{ipv4address: '1.2.3.4'},
+      values: ["Your ip address is: 1.2.3.4"]
+    } = ABNF.apply grammar, "ipv4address", '1.2.3.4rest', %{}
+  end
+
   test "ipv4" do
     grammar = load "ipv4"
 
@@ -691,6 +703,7 @@ defmodule ABNF_Test do
         "RFC3966",
         "RFC3986",
         "RFC4566",
+        "module_code",
         "RFC5322-no-obs"
       ] do
         :ets.insert_new(
