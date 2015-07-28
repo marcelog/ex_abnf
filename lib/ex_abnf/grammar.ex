@@ -60,7 +60,7 @@ defmodule ABNF.Grammar do
                 str
               else
                 {_, f, c} = v[:code]
-                str = str <> "def #{f}(state, rule, string_tokens, values) do\r\n"
+                str = str <> "def #{f}(state, rule, string_values, values) do\r\n"
                 str = str <> "\t#{c}\r\n"
                 str = str <> "end\r\n"
                 str
