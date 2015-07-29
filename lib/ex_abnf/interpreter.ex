@@ -161,9 +161,9 @@ defmodule ABNF.Interpreter do
   end
 
   defp parse_real(grammar, %{element: :rulename, value: e}, input, state) do
-    {:ok, value} = :maps.find e, grammar
-    if is_nil value do
-      raise ArgumentError, "Rule #{e} not found in #{Map.keys(grammar)}"
+    value = case :maps.find e, grammar do
+      {:ok, value} -> value
+      _ ->  raise ArgumentError, "Rule #{e} not found in #{Map.keys(grammar)}"
     end
     parse_real grammar, value, input, state
   end
