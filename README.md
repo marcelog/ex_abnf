@@ -4,8 +4,12 @@
 
 A parser and interpreter written in [Elixir](http://elixir-lang.org/) for [ABNF grammars](https://en.wikipedia.org/wiki/Augmented_Backus%E2%80%93Naur_Form).
 
-ABNF is defined in the [RFC4234](https://tools.ietf.org/html/rfc4234),
-and updated in the [RFC5234](https://tools.ietf.org/html/rfc5234).
+ABNF is defined in the [RFC2234](https://tools.ietf.org/html/rfc2234), which is
+obsoleted by [RFC4234](https://tools.ietf.org/html/rfc4234), which in turn is
+obsoleted by the [RFC5234](https://tools.ietf.org/html/rfc5234). There's also an update
+in the [RFC7405](https://tools.ietf.org/html/rfc5234).
+
+This library implements the latest definition (RFC5234) (with erratas #3076, and #2968], and RFC7405.
 
 ## Use example
 
@@ -125,9 +129,6 @@ DIGIT = %x30-39
 
 Note how the result of the `IPv4address` rule is the result of a call to the
 function `return_value`.
-
-## TODO
- * Implement [RFC7405](https://tools.ietf.org/html/rfc7405)
 
 ## Changes from 0.1.x to 0.2.x
  * In the reduce code the rule value is no longer the rule name, but the

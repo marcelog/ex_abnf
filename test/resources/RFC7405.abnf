@@ -1,0 +1,3 @@
+case-sensitive = %s"aBc"
+case-insensitive-1 = %i"abc"
+case-insensitive-2 = "abc"

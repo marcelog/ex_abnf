@@ -404,8 +404,17 @@ defmodule ABNF.Grammar do
     end
   end
 
-  # char-val = DQUOTE *(%x20-21 / %x23-7E) DQUOTE
-  # ; quoted string of SP and VCHAR without DQUOTE
+  # From RFC7405:
+  # char-val = case-insensitive-string / case-sensitive-string
+  defp char_val(input) do
+    case case_insensitive_string input do
+      nil -> case_sensitive_string input
+      r -> r
+    end
+  end
+
+  # From RFC7405
+  # case-insensitive-string = [ "%i" ] quoted-string
   #
   # ABNF permits the specification of literal text strings directly,
   # enclosed in quotation-marks.  Hence:
@@ -422,36 +431,78 @@ defmodule ABNF.Grammar do
   # "aBc", "abC", "ABc", "aBC", "AbC", and "ABC".
   # To specify a rule that IS case SENSITIVE, specify the characters
   # individually.
-  defp char_val(input) do
+  defp case_insensitive_string(input) do
     case input do
-      [char|rest] -> if Core.dquote? char do
-        char_val_tail rest
+      [?%, char|rest] -> if char === ?i or char === ?I do
+        case quoted_string rest do
+          nil -> nil
+          {{l, str}, rest} -> char_val_token rest, l, str, [:caseless]
+        end
+      else
+        nil
+      end
+      _ -> case quoted_string input do
+        nil -> nil
+        {{l, str}, rest} -> char_val_token rest, l, str, [:caseless]
+      end
+    end
+  end
+
+  # From RFC7405
+  # case-sensitive-string = "%s" quoted-string
+  defp case_sensitive_string(input) do
+    case input do
+      [?%, char|rest] -> if char === ?s or char === ?S do
+        case quoted_string rest do
+          nil -> nil
+          {{l, str}, rest} -> char_val_token rest, l, str
+        end
+      else
+        nil
       end
       _ -> nil
     end
   end
 
-  defp char_val_tail(input, acc \\ {0, []}) do
+  defp char_val_token(rest, length, str, options \\ []) do
+    {:ok, r} = :re.compile [?^, str], options
+    {
+      token(:char_val, %{
+        regex: r,
+        length: length
+      }),
+      rest
+    }
+  end
+
+  # From RFC7405
+  # quoted-string  DQUOTE *(%x20-21 / %x23-7E) DQUOTE
+  # ; quoted string of SP and VCHAR without DQUOTE
+  defp quoted_string(input) do
+    case input do
+      [char|rest] -> if Core.dquote? char do
+        quoted_string_tail rest
+      else
+        nil
+      end
+      [] -> nil
+    end
+  end
+
+  defp quoted_string_tail(input, acc \\ {0, []}) do
     {l, acc_char} = acc
     case input do
       [char|rest] ->
         if((char >= 0x20 and char <= 0x21) or (char >= 0x23 and char <= 0x7E)) do
           escape = not (Core.alpha?(char) or Core.digit?(char))
           if escape do
-            char_val_tail rest, {l + 1, [char, 92|acc_char]}
+            quoted_string_tail rest, {l + 1, [char, 92|acc_char]}
           else
-            char_val_tail rest, {l + 1, [char|acc_char]}
+            quoted_string_tail rest, {l + 1, [char|acc_char]}
           end
         else
           if Core.dquote? char do
-            {:ok, r} = :re.compile [?^, Enum.reverse(acc_char)], [:caseless]
-            {
-              token(:char_val, %{
-                regex: r,
-                length: l
-              }),
-              rest
-            }
+            {{l, Enum.reverse(acc_char)}, rest}
           else
             nil
           end

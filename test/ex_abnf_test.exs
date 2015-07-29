@@ -19,6 +19,38 @@ defmodule ABNF_Test do
   require Logger
   @on_load :init
 
+  test "can do case (in)sensitive matches - RFC7405" do
+    grammar = load "RFC7405"
+
+    nil = ABNF.apply grammar, "case-sensitive", 'abc', nil
+    %Res{
+      input: 'aBc',
+      rest: '',
+      string_text: 'aBc',
+      string_tokens: ['aBc'],
+      state: nil,
+      values: _
+    } = ABNF.apply grammar, "case-sensitive", 'aBc', nil
+
+    %Res{
+      input: 'aBc',
+      rest: '',
+      string_text: 'aBc',
+      string_tokens: ['aBc'],
+      state: nil,
+      values: _
+    } = ABNF.apply grammar, "case-insensitive-1", 'aBc', nil
+
+    %Res{
+      input: 'aBc',
+      rest: '',
+      string_text: 'aBc',
+      string_tokens: ['aBc'],
+      state: nil,
+      values: _
+    } = ABNF.apply grammar, "case-insensitive-2", 'aBc', nil
+  end
+
   test "can write module code" do
     grammar = load "module_code"
     %Res{
@@ -699,6 +731,7 @@ defmodule ABNF_Test do
         "path",
         "reduce",
         "basic",
+        "RFC7405",
         "RFC3261",
         "RFC3966",
         "RFC3986",
