@@ -9,7 +9,7 @@ obsoleted by [RFC4234](https://tools.ietf.org/html/rfc4234), which in turn is
 obsoleted by the [RFC5234](https://tools.ietf.org/html/rfc5234). There's also an update
 in the [RFC7405](https://tools.ietf.org/html/rfc5234).
 
-This library implements the latest definition (RFC5234) (with erratas #3076, and #2968], and RFC7405.
+This library implements the latest definition (RFC5234) (with erratas #3076, and #2968), and RFC7405.
 
 ## Use example
 
