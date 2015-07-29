@@ -7,7 +7,7 @@ A parser and interpreter written in [Elixir](http://elixir-lang.org/) for [ABNF 
 ABNF is defined in the [RFC2234](https://tools.ietf.org/html/rfc2234), which is
 obsoleted by [RFC4234](https://tools.ietf.org/html/rfc4234), which in turn is
 obsoleted by the [RFC5234](https://tools.ietf.org/html/rfc5234). There's also an update
-in the [RFC7405](https://tools.ietf.org/html/rfc5234).
+in the [RFC7405](https://tools.ietf.org/html/rfc7405).
 
 This library implements the latest definition (RFC5234) (with erratas #3076, and #2968), and RFC7405.
 
