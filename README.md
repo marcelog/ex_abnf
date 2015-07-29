@@ -2,10 +2,10 @@
 
 ## About
 
-A parser and interpreter for ABNF grammars.
+A parser and interpreter written in [Elixir](http://elixir-lang.org/) for [ABNF grammars](https://en.wikipedia.org/wiki/Augmented_Backus%E2%80%93Naur_Form).
 
-ABNF is defined in: [https://tools.ietf.org/html/rfc4234](https://tools.ietf.org/html/rfc4234),
-and updated in [https://tools.ietf.org/html/rfc5234](https://tools.ietf.org/html/rfc5234).
+ABNF is defined in the [RFC4234](https://tools.ietf.org/html/rfc4234),
+and updated in the [RFC5234](https://tools.ietf.org/html/rfc5234).
 
 ## Use example
 
