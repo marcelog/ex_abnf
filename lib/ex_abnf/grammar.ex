@@ -124,9 +124,10 @@ defmodule ABNF.Grammar do
   # ; basic rules definition and incremental alternatives
   defp defined_as(input) do
     case zero_or_more_cwsp input do
-      {_, [?=, ?/|rest]} ->
-        {_, rest} = zero_or_more_cwsp rest
-        {:not_equal, rest}
+      {_, [?=, ?/|_rest]} ->
+        raise RuntimeError, "Incremental alternatives are not yet supported"
+        #{_, rest} = zero_or_more_cwsp rest
+        #{:alternative, rest}
       {_, [?=|rest]} ->
         {_, rest} = zero_or_more_cwsp rest
         {:equal, rest}
