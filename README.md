@@ -36,7 +36,8 @@ where:
 
 ## More complex examples
 
-* There's a small sample application at [https://github.com/marcelog/ex_abnf_example](https://github.com/marcelog/ex_abnf_example).
+* There's a small sample application at [https://github.com/marcelog/ex_abnf_example](https://github.com/marcelog/ex_abnf_example). An article
+describing this application is located at [http://marcelog.github.io/articles/abnf_grammars_in_elixir.html](http://marcelog.github.io/articles/abnf_grammars_in_elixir.html).
 
 * The [unit tests](https://github.com/marcelog/ex_abnf/blob/master/test/ex_abnf_test.exs)
 use different [sample RFCs](https://github.com/marcelog/ex_abnf/tree/master/test/resources) to
