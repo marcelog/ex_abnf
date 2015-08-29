@@ -36,7 +36,9 @@ where:
 
 ## More complex examples
 
-The [unit tests](https://github.com/marcelog/ex_abnf/blob/master/test/ex_abnf_test.exs)
+* There's a small sample application at [https://github.com/marcelog/ex_abnf_example](https://github.com/marcelog/ex_abnf_example).
+
+* The [unit tests](https://github.com/marcelog/ex_abnf/blob/master/test/ex_abnf_test.exs)
 use different [sample RFCs](https://github.com/marcelog/ex_abnf/tree/master/test/resources) to
 test the [grammar parser](https://github.com/marcelog/ex_abnf/blob/master/lib/ex_abnf/grammar.ex)
 and [the interpreter](https://github.com/marcelog/ex_abnf/blob/master/lib/ex_abnf/interpreter.ex)
