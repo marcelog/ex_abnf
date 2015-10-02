@@ -324,8 +324,6 @@ defmodule ABNF.Interpreter do
               else
                 nil
               end
-            else
-              nil
             end
           next_r ->
             # Next one matches, we're cool. Go on, and pass on the next match
