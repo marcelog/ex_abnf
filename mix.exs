@@ -33,7 +33,7 @@ defmodule ABNF.Mixfile do
   defp package do
     [
       files: ["lib", "mix.exs", "README*", "LICENSE*"],
-      contributors: ["Marcelo Gornstein"],
+      maintainers: ["Marcelo Gornstein"],
       licenses: ["Apache 2.0"],
       links: %{
         "GitHub" => "https://github.com/marcelog/ex_abnf"
