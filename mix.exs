@@ -6,7 +6,7 @@ defmodule ABNF.Mixfile do
      name: "ex_abnf",
      source_url: "https://github.com/marcelog/ex_abnf",
      version: "0.2.5",
-     elixir: "> 1.0.0",
+     elixir: ">= 1.0.0",
      description: description,
      package: package,
      deps: deps]
