@@ -617,11 +617,15 @@ defmodule ABNF.Grammar do
 
   defp crlf(input) do
     case input do
-      [char1, char2|rest] -> if Core.cr?(char1) and Core.lf?(char2) do
-        {[char1, char2], rest}
-      else
-        nil
-      end
+      [char1, char2|rest] ->
+        cond do
+          Core.cr?(char1) and Core.lf?(char2) ->
+            {[char1, char2], rest}
+          Core.cr?(char1) == false and Core.lf?(char2) ->
+            raise ArgumentError, message: "Lines should end with CRLF [13,10], found [#{char1},#{char2}]"
+          true ->
+            nil
+        end
       _ -> nil
     end
   end
