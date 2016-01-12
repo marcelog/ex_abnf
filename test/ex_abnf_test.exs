@@ -19,6 +19,12 @@ defmodule ABNF_Test do
   require Logger
   @on_load :init
 
+  test "raises for incorrect line endings" do
+    assert_raise ArgumentError, "Lines should end with CRLF [13,10], found [122,10]", fn ->
+      ABNF.load_file("test/resources/bad_line_endings.abnf")
+    end
+  end
+
   test "can do case (in)sensitive matches - RFC7405" do
     grammar = load "RFC7405"
 
