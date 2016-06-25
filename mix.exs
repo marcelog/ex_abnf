@@ -5,7 +5,7 @@ defmodule ABNF.Mixfile do
     [app: :ex_abnf,
      name: "ex_abnf",
      source_url: "https://github.com/marcelog/ex_abnf",
-     version: "0.2.7",
+     version: "0.2.8",
      elixir: ">= 1.0.0",
      description: description,
      package: package,
@@ -18,8 +18,8 @@ defmodule ABNF.Mixfile do
 
   defp deps do
     [
-      {:earmark, "~> 0.1", only: :dev},
-      {:ex_doc, "~> 0.7", only: :dev}
+      {:earmark, "~> 0.2.1", only: :dev},
+      {:ex_doc, "~> 0.12.0", only: :dev}
     ]
   end
 
