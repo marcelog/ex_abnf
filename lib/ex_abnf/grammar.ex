@@ -44,7 +44,7 @@ defmodule ABNF.Grammar do
           nil ->
             module_name = String.to_atom(
               "A#{Base.encode16 :crypto.hash(
-                :md5, :erlang.term_to_binary(make_ref)
+                :md5, :erlang.term_to_binary(make_ref())
               )}"
             )
 
@@ -54,7 +54,7 @@ defmodule ABNF.Grammar do
               else
                 fun_name = String.to_atom(
                   String.downcase("A#{Base.encode16 :crypto.hash(
-                    :md5, :erlang.term_to_binary(make_ref)
+                    :md5, :erlang.term_to_binary(make_ref())
                   )}"
                 ))
                 {module_name, fun_name, v[:code]}

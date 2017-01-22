@@ -728,7 +728,7 @@ defmodule ABNF_Test do
 
   # Load grammars before tests are run
   def init() do
-    me = self
+    me = self()
     spawn fn ->
       :ets = :ets.new :ets, [:named_table, :public, {:read_concurrency, true}]
       for t <- [
