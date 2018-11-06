@@ -69,6 +69,8 @@ defmodule ABNF.Grammar do
               else
                 {_, f, c} = v[:code]
                 str = str <> "def #{f}(state, rule, string_values, values) do\r\n"
+                # silence warnings about unused variables
+                str = str <> "\t_ = {state, rule, string_values, values}\r\n"
                 str = str <> "\t#{c}\r\n"
                 str = str <> "end\r\n"
                 str
