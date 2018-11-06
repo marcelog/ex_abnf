@@ -28,7 +28,7 @@ defmodule ABNF.Interpreter do
   """
   @spec apply(
     Grammar.t, String.t, char_list, term
-  ) :: CaptureResult.t | no_return
+  ) :: ABNF.CaptureResult.t | no_return
   def apply(grammar, rule_str, input, state \\ nil) do
     rule_str = Util.rulename rule_str
     case parse_real grammar, %{element: :rulename, value: rule_str}, input, state do

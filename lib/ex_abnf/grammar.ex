@@ -19,7 +19,7 @@ defmodule ABNF.Grammar do
 
   alias ABNF.Core, as: Core
   alias ABNF.Util, as: Util
-  @type t :: Map
+  @type t :: map()
 
   # rulelist = 1*( rule / (*WSP c-nl) )
   # As described in the Errata #3076
