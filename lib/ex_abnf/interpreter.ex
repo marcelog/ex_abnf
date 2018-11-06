@@ -27,7 +27,7 @@ defmodule ABNF.Interpreter do
   Parses the given input using the given grammar.
   """
   @spec apply(
-    Grammar.t, String.t, char_list, term
+    Grammar.t, String.t, charlist, term
   ) :: ABNF.CaptureResult.t | no_return
   def apply(grammar, rule_str, input, state \\ nil) do
     rule_str = Util.rulename rule_str

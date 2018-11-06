@@ -27,7 +27,7 @@ defmodule ABNF.Grammar do
   Builds a Grammar.t from the given input (an ABNF text grammar). You should
   never use this one directly but use the ones in the ABNF module instead.
   """
-  @spec rulelist(char_list) :: t
+  @spec rulelist(charlist) :: t
   def rulelist(input) do
     {module_code, rest} = case code input do
       nil -> {"", input}
