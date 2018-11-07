@@ -28,7 +28,7 @@ defmodule ABNF do
   @spec load_file(String.t) :: Grammar.t | no_return
   def load_file(file) do
     data = File.read! file
-    load to_char_list(data)
+    load to_charlist(data)
   end
 
   @doc """

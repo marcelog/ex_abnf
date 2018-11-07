@@ -19,7 +19,7 @@ defmodule ABNF.Grammar do
 
   alias ABNF.Core, as: Core
   alias ABNF.Util, as: Util
-  @type t :: Map
+  @type t :: map()
 
   # rulelist = 1*( rule / (*WSP c-nl) )
   # As described in the Errata #3076
@@ -27,7 +27,7 @@ defmodule ABNF.Grammar do
   Builds a Grammar.t from the given input (an ABNF text grammar). You should
   never use this one directly but use the ones in the ABNF module instead.
   """
-  @spec rulelist(char_list) :: t
+  @spec rulelist(charlist) :: t
   def rulelist(input) do
     {module_code, rest} = case code input do
       nil -> {"", input}
@@ -69,6 +69,8 @@ defmodule ABNF.Grammar do
               else
                 {_, f, c} = v[:code]
                 str = str <> "def #{f}(state, rule, string_values, values) do\r\n"
+                # silence warnings about unused variables
+                str = str <> "\t_ = {state, rule, string_values, values}\r\n"
                 str = str <> "\t#{c}\r\n"
                 str = str <> "end\r\n"
                 str

@@ -21,7 +21,7 @@ defmodule ABNF.Util do
   @doc """
   Normalices a rule name. It will convert it to a String.t and also downcase it.
   """
-  @spec rulename(String.t|char_list) :: String.t
+  @spec rulename(String.t|charlist) :: String.t
   def rulename(name) when is_list(name) do
     rulename to_string(name)
   end

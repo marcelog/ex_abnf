@@ -574,7 +574,7 @@ defmodule ABNF_Test do
 
   test "sdp" do
     grammar = load "RFC4566"
-    data = to_char_list(File.read! "test/resources/sdp1.txt")
+    data = to_charlist(File.read! "test/resources/sdp1.txt")
     %Res{
       input: ^data,
       rest: '',
@@ -612,7 +612,7 @@ defmodule ABNF_Test do
 
   test "sip" do
     grammar = load "RFC3261"
-    data = to_char_list(File.read! "test/resources/sip1.txt")
+    data = to_charlist(File.read! "test/resources/sip1.txt")
     %Res{
       input: ^data,
       rest: '',
