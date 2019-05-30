@@ -22,32 +22,33 @@ defmodule ABNF do
   alias ABNF.Interpreter, as: Interpreter
   alias ABNF.CaptureResult, as: CaptureResult
   require Logger
+
   @doc """
   Loads a set of abnf rules from a file.
   """
-  @spec load_file(String.t) :: Grammar.t | no_return
+  @spec load_file(String.t()) :: Grammar.t() | no_return
   def load_file(file) do
-    data = File.read! file
-    load to_char_list(data)
+    data = File.read!(file)
+    load(to_charlist(data))
   end
 
   @doc """
   Returns the abnf rules found in the given char list.
   """
-  @spec load([byte]) :: Grammar.t | no_return
+  @spec load([byte]) :: Grammar.t() | no_return
   def load(input) do
-    case Grammar.rulelist input do
+    case Grammar.rulelist(input) do
       {rules, ''} -> rules
-      {_rlist, rest} -> throw {:incomplete_parsing, rest}
-      _ -> throw {:invalid_grammar, input}
+      {_rlist, rest} -> throw({:incomplete_parsing, rest})
+      _ -> throw({:invalid_grammar, input})
     end
   end
 
   @doc """
   Parses an input given a gramar, looking for the given rule.
   """
-  @spec apply(Grammar.t, String.t, [byte], term) :: CaptureResult.t
+  @spec apply(Grammar.t(), String.t(), [byte], term) :: CaptureResult.t()
   def apply(grammar, rule, input, state \\ nil) do
-    Interpreter.apply grammar, rule, input, state
+    Interpreter.apply(grammar, rule, input, state)
   end
 end

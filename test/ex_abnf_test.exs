@@ -26,17 +26,9 @@ defmodule ABNF_Test do
   end
 
   test "can do case (in)sensitive matches - RFC7405" do
-    grammar = load "RFC7405"
+    grammar = load("RFC7405")
 
-    nil = ABNF.apply grammar, "case-sensitive", 'abc', nil
-    %Res{
-      input: 'aBc',
-      rest: '',
-      string_text: 'aBc',
-      string_tokens: ['aBc'],
-      state: nil,
-      values: _
-    } = ABNF.apply grammar, "case-sensitive", 'aBc', nil
+    nil = ABNF.apply(grammar, "case-sensitive", 'abc', nil)
 
     %Res{
       input: 'aBc',
@@ -45,7 +37,7 @@ defmodule ABNF_Test do
       string_tokens: ['aBc'],
       state: nil,
       values: _
-    } = ABNF.apply grammar, "case-insensitive-1", 'aBc', nil
+    } = ABNF.apply(grammar, "case-sensitive", 'aBc', nil)
 
     %Res{
       input: 'aBc',
@@ -54,11 +46,21 @@ defmodule ABNF_Test do
       string_tokens: ['aBc'],
       state: nil,
       values: _
-    } = ABNF.apply grammar, "case-insensitive-2", 'aBc', nil
+    } = ABNF.apply(grammar, "case-insensitive-1", 'aBc', nil)
+
+    %Res{
+      input: 'aBc',
+      rest: '',
+      string_text: 'aBc',
+      string_tokens: ['aBc'],
+      state: nil,
+      values: _
+    } = ABNF.apply(grammar, "case-insensitive-2", 'aBc', nil)
   end
 
   test "can write module code" do
-    grammar = load "module_code"
+    grammar = load("module_code")
+
     %Res{
       input: '1.2.3.4rest',
       rest: 'rest',
@@ -66,11 +68,11 @@ defmodule ABNF_Test do
       string_tokens: ['1', '.', '2', '.', '3', '.', '4'],
       state: %{ipv4address: '1.2.3.4'},
       values: ["Your ip address is: 1.2.3.4"]
-    } = ABNF.apply grammar, "ipv4address", '1.2.3.4rest', %{}
+    } = ABNF.apply(grammar, "ipv4address", '1.2.3.4rest', %{})
   end
 
   test "ipv4" do
-    grammar = load "ipv4"
+    grammar = load("ipv4")
 
     %Res{
       input: '1.2.3.4rest',
@@ -79,7 +81,7 @@ defmodule ABNF_Test do
       string_tokens: ['1', '.', '2', '.', '3', '.', '4'],
       state: %{ipv4address: '1.2.3.4'},
       values: ["Your ip address is: 1.2.3.4"]
-    } = ABNF.apply grammar, "ipv4address", '1.2.3.4rest', %{}
+    } = ABNF.apply(grammar, "ipv4address", '1.2.3.4rest', %{})
 
     %Res{
       input: '192.168.0.1rest',
@@ -88,7 +90,7 @@ defmodule ABNF_Test do
       string_tokens: ['192', '.', '168', '.', '0', '.', '1'],
       state: %{ipv4address: '192.168.0.1'},
       values: ["Your ip address is: 192.168.0.1"]
-    } = ABNF.apply grammar, "ipv4address", '192.168.0.1rest', %{}
+    } = ABNF.apply(grammar, "ipv4address", '192.168.0.1rest', %{})
 
     %Res{
       input: '255.255.255.255rest',
@@ -97,13 +99,14 @@ defmodule ABNF_Test do
       string_tokens: ['255', '.', '255', '.', '255', '.', '255'],
       state: %{ipv4address: '255.255.255.255'},
       values: ["Your ip address is: 255.255.255.255"]
-    } = ABNF.apply grammar, "ipv4address", '255.255.255.255rest', %{}
+    } = ABNF.apply(grammar, "ipv4address", '255.255.255.255rest', %{})
 
-    nil = ABNF.apply grammar, "ipv4address", '255.255.256.255rest', %{}
+    nil = ABNF.apply(grammar, "ipv4address", '255.255.256.255rest', %{})
   end
 
   test "medium complexity" do
-    grammar = load "path"
+    grammar = load("path")
+
     %Res{
       input: 'segment',
       rest: '',
@@ -111,7 +114,7 @@ defmodule ABNF_Test do
       string_tokens: ['s', 'egment'],
       state: ['segment'],
       values: _
-    } = ABNF.apply grammar, "segment", 'segment', []
+    } = ABNF.apply(grammar, "segment", 'segment', [])
 
     %Res{
       input: '/a',
@@ -120,7 +123,7 @@ defmodule ABNF_Test do
       string_tokens: ['/a'],
       state: ['a'],
       values: _
-    } = ABNF.apply grammar, "path", '/a', []
+    } = ABNF.apply(grammar, "path", '/a', [])
 
     %Res{
       input: '/aa/bb',
@@ -129,11 +132,12 @@ defmodule ABNF_Test do
       string_tokens: ['/aa/bb'],
       state: ['aa', 'bb'],
       values: _
-    } = ABNF.apply grammar, "path", '/aa/bb', []
+    } = ABNF.apply(grammar, "path", '/aa/bb', [])
   end
 
   test "basic repetition and optional" do
-    grammar = load "basic"
+    grammar = load("basic")
+
     %Res{
       input: 'helloworld rest',
       rest: ' rest',
@@ -141,7 +145,7 @@ defmodule ABNF_Test do
       string_tokens: ['helloworld'],
       state: nil,
       values: _
-    } = ABNF.apply grammar, "string1", 'helloworld rest', nil
+    } = ABNF.apply(grammar, "string1", 'helloworld rest', nil)
 
     %Res{
       input: 'helloworld rest',
@@ -150,7 +154,7 @@ defmodule ABNF_Test do
       string_tokens: ['hel'],
       state: nil,
       values: _
-    } = ABNF.apply grammar, "string2", 'helloworld rest', nil
+    } = ABNF.apply(grammar, "string2", 'helloworld rest', nil)
 
     %Res{
       input: 'helloworld rest',
@@ -159,7 +163,7 @@ defmodule ABNF_Test do
       string_tokens: ['he'],
       state: nil,
       values: _
-    } = ABNF.apply grammar, "string3", 'helloworld rest', nil
+    } = ABNF.apply(grammar, "string3", 'helloworld rest', nil)
 
     %Res{
       input: 'helloworld rest',
@@ -168,7 +172,7 @@ defmodule ABNF_Test do
       string_tokens: ['helloworld'],
       state: nil,
       values: _
-    } = ABNF.apply grammar, "string4", 'helloworld rest', nil
+    } = ABNF.apply(grammar, "string4", 'helloworld rest', nil)
 
     %Res{
       input: '3helloworld rest',
@@ -177,7 +181,7 @@ defmodule ABNF_Test do
       string_tokens: ['3', 'helloworld'],
       state: nil,
       values: _
-    } = ABNF.apply grammar, "string5", '3helloworld rest', nil
+    } = ABNF.apply(grammar, "string5", '3helloworld rest', nil)
 
     %Res{
       input: 'helloworld rest',
@@ -186,11 +190,11 @@ defmodule ABNF_Test do
       string_tokens: ['', 'helloworld'],
       state: nil,
       values: _
-    } = ABNF.apply grammar, "string5", 'helloworld rest', nil
+    } = ABNF.apply(grammar, "string5", 'helloworld rest', nil)
   end
 
   test "ipv6" do
-    grammar = load "ipv6"
+    grammar = load("ipv6")
 
     addresses = [
       '::',
@@ -391,21 +395,23 @@ defmodule ABNF_Test do
       'a:b:c:d:e:f:0::'
     ]
 
-    Enum.each addresses, fn(a) ->
-      Logger.debug "Testing IPv6: #{inspect a}"
+    Enum.each(addresses, fn a ->
+      Logger.debug("Testing IPv6: #{inspect(a)}")
       string = a ++ 'rest'
+
       %Res{
         input: ^string,
         rest: 'rest',
         string_text: ^a,
         state: %{}
-      } = ABNF.apply grammar, "ipv6address", string, %{}
-    end
+      } = ABNF.apply(grammar, "ipv6address", string, %{})
+    end)
   end
 
   test "uri" do
-    grammar = load "RFC3986"
+    grammar = load("RFC3986")
     url = 'http://user:pass@host.com:421/some/path?k1=v1&k2=v2#one_fragment'
+
     %Res{
       input: ^url,
       rest: '',
@@ -429,9 +435,10 @@ defmodule ABNF_Test do
         '#one_fragment'
       ],
       values: _
-    } = ABNF.apply grammar, "uri", url, %{segments: []}
+    } = ABNF.apply(grammar, "uri", url, %{segments: []})
 
     url = 'http:/path'
+
     %Res{
       input: ^url,
       rest: '',
@@ -443,9 +450,10 @@ defmodule ABNF_Test do
       string_text: ^url,
       string_tokens: ['http', ':', '/path', '', ''],
       values: _
-    } = ABNF.apply grammar, "uri", url, %{segments: []}
+    } = ABNF.apply(grammar, "uri", url, %{segments: []})
 
     url = 'http://a.com'
+
     %Res{
       input: ^url,
       rest: '',
@@ -458,9 +466,10 @@ defmodule ABNF_Test do
       string_text: ^url,
       string_tokens: ['http', ':', '//a.com', '', ''],
       values: _
-    } = ABNF.apply grammar, "uri", url, %{segments: []}
+    } = ABNF.apply(grammar, "uri", url, %{segments: []})
 
     url = 'http://a.com:789'
+
     %Res{
       input: ^url,
       rest: '',
@@ -474,9 +483,10 @@ defmodule ABNF_Test do
       string_text: ^url,
       string_tokens: ['http', ':', '//a.com:789', '', ''],
       values: _
-    } = ABNF.apply grammar, "uri", url, %{segments: []}
+    } = ABNF.apply(grammar, "uri", url, %{segments: []})
 
     url = 'http://192.168.0.1/path'
+
     %Res{
       input: ^url,
       rest: '',
@@ -490,9 +500,10 @@ defmodule ABNF_Test do
       string_text: ^url,
       string_tokens: ['http', ':', '//192.168.0.1/path', '', ''],
       values: _
-    } = ABNF.apply grammar, "uri", url, %{segments: []}
+    } = ABNF.apply(grammar, "uri", url, %{segments: []})
 
     url = 'http:'
+
     %Res{
       input: ^url,
       rest: '',
@@ -503,9 +514,10 @@ defmodule ABNF_Test do
       string_text: ^url,
       string_tokens: ['http', ':', '', '', ''],
       values: _
-    } = ABNF.apply grammar, "uri", url, %{segments: []}
+    } = ABNF.apply(grammar, "uri", url, %{segments: []})
 
     url = 'http:path1/path2'
+
     %Res{
       input: ^url,
       rest: '',
@@ -517,9 +529,10 @@ defmodule ABNF_Test do
       string_text: ^url,
       string_tokens: ['http', ':', 'path1/path2', '', ''],
       values: _
-    } = ABNF.apply grammar, "uri", url, %{segments: []}
+    } = ABNF.apply(grammar, "uri", url, %{segments: []})
 
     url = 'http://[v1.fe80::a+en1]/path'
+
     %Res{
       input: ^url,
       rest: '',
@@ -533,11 +546,12 @@ defmodule ABNF_Test do
       string_text: ^url,
       string_tokens: ['http', ':', '//[v1.fe80::a+en1]/path', '', ''],
       values: _
-    } = ABNF.apply grammar, "uri", url, %{segments: []}
+    } = ABNF.apply(grammar, "uri", url, %{segments: []})
   end
 
   test "can reduce rule" do
-    grammar = load "reduce"
+    grammar = load("reduce")
+
     %Res{
       input: '123asd',
       rest: '',
@@ -545,13 +559,14 @@ defmodule ABNF_Test do
       string_text: '123asd',
       string_tokens: ['123', 'asd'],
       values: [%{int: 123, string: "asd"}]
-    } = ABNF.apply grammar, "composed", '123asd', %{field: false}
+    } = ABNF.apply(grammar, "composed", '123asd', %{field: false})
   end
 
   test "teluri" do
-    grammar = load "RFC3966"
+    grammar = load("RFC3966")
 
     tel = 'tel:+1-201-555-0123'
+
     %Res{
       input: 'tel:+1-201-555-0123',
       rest: '',
@@ -559,9 +574,10 @@ defmodule ABNF_Test do
       string_text: 'tel:+1-201-555-0123',
       string_tokens: ['tel:', '+1-201-555-0123'],
       values: _
-    } = ABNF.apply grammar, "telephone-uri", tel, %{}
+    } = ABNF.apply(grammar, "telephone-uri", tel, %{})
 
     tel = 'tel:863-1234;phone-context=+1-914-555'
+
     %Res{
       input: 'tel:863-1234;phone-context=+1-914-555',
       rest: '',
@@ -569,12 +585,13 @@ defmodule ABNF_Test do
       string_text: 'tel:863-1234;phone-context=+1-914-555',
       string_tokens: ['tel:', '863-1234;phone-context=+1-914-555'],
       values: _
-    } = ABNF.apply grammar, "telephone-uri", tel, %{}
+    } = ABNF.apply(grammar, "telephone-uri", tel, %{})
   end
 
   test "sdp" do
-    grammar = load "RFC4566"
-    data = to_char_list(File.read! "test/resources/sdp1.txt")
+    grammar = load("RFC4566")
+    data = to_charlist(File.read!("test/resources/sdp1.txt"))
+
     %Res{
       input: ^data,
       rest: '',
@@ -607,12 +624,13 @@ defmodule ABNF_Test do
         'm=audio 49170 RTP/AVP 0 8 97\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:97 iLBC/8000\r\nm=video 51372 RTP/AVP 31 32\r\na=rtpmap:31 H261/90000\r\na=rtpmap:32 MPV/90000\r\n'
       ],
       values: _
-      } = ABNF.apply grammar, "session-description", data, %{}
+    } = ABNF.apply(grammar, "session-description", data, %{})
   end
 
   test "sip" do
-    grammar = load "RFC3261"
-    data = to_char_list(File.read! "test/resources/sip1.txt")
+    grammar = load("RFC3261")
+    data = to_charlist(File.read!("test/resources/sip1.txt"))
+
     %Res{
       input: ^data,
       rest: '',
@@ -640,15 +658,17 @@ defmodule ABNF_Test do
       },
       string_text: ^data,
       string_tokens: [^data]
-    } = ABNF.apply grammar, "SIP-message", data, %{
-      headers: %{}
-    }
+    } =
+      ABNF.apply(grammar, "SIP-message", data, %{
+        headers: %{}
+      })
   end
 
   test "email" do
-    grammar = load "RFC5322-no-obs"
+    grammar = load("RFC5322-no-obs")
 
     email = 'user@domain.com'
+
     %Res{
       input: ^email,
       rest: '',
@@ -659,9 +679,10 @@ defmodule ABNF_Test do
       string_text: ^email,
       string_tokens: ['user@domain.com'],
       values: _
-    } = ABNF.apply grammar, "mailbox", email, %{}
+    } = ABNF.apply(grammar, "mailbox", email, %{})
 
     email = '<user@domain.com>'
+
     %Res{
       input: ^email,
       rest: '',
@@ -672,9 +693,10 @@ defmodule ABNF_Test do
       string_text: ^email,
       string_tokens: ['<user@domain.com>'],
       values: _
-    } = ABNF.apply grammar, "mailbox", email, %{}
+    } = ABNF.apply(grammar, "mailbox", email, %{})
 
     email = 'Peter Cantropus <user@domain.com>'
+
     %Res{
       input: ^email,
       rest: '',
@@ -686,9 +708,10 @@ defmodule ABNF_Test do
       string_text: ^email,
       string_tokens: ['Peter Cantropus <user@domain.com>'],
       values: _
-    } = ABNF.apply grammar, "mailbox", email, %{}
+    } = ABNF.apply(grammar, "mailbox", email, %{})
 
     input = '21 Nov 1997 10:01:22 -0600'
+
     %Res{
       input: ^input,
       rest: '',
@@ -704,9 +727,10 @@ defmodule ABNF_Test do
       string_text: ^input,
       string_tokens: [[], '21 Nov 1997 ', '10:01:22 -0600', []],
       values: _
-    } = ABNF.apply grammar, "date-time", input, %{}
+    } = ABNF.apply(grammar, "date-time", input, %{})
 
     input = 'Received: from node.example by x.y.test; 21 Nov 1997 10:01:22 -0600\r\n'
+
     %Res{
       input: ^input,
       rest: '',
@@ -721,48 +745,62 @@ defmodule ABNF_Test do
         year: '1997'
       },
       string_text: ^input,
-      string_tokens: ['Received:', ' from node.example by x.y.test', ';', ' 21 Nov 1997 10:01:22 -0600', '\r\n'],
+      string_tokens: [
+        'Received:',
+        ' from node.example by x.y.test',
+        ';',
+        ' 21 Nov 1997 10:01:22 -0600',
+        '\r\n'
+      ],
       values: _
-    } = ABNF.apply grammar, "Received", input, %{}
+    } = ABNF.apply(grammar, "Received", input, %{})
   end
 
   # Load grammars before tests are run
   def init() do
     me = self()
-    spawn fn ->
-      :ets = :ets.new :ets, [:named_table, :public, {:read_concurrency, true}]
+
+    spawn(fn ->
+      :ets = :ets.new(:ets, [:named_table, :public, {:read_concurrency, true}])
+
       for t <- [
-        "ipv4",
-        "ipv6",
-        "path",
-        "reduce",
-        "basic",
-        "RFC7405",
-        "RFC3261",
-        "RFC3966",
-        "RFC3986",
-        "RFC4566",
-        "module_code",
-        "RFC5322-no-obs"
-      ] do
+            "ipv4",
+            "ipv6",
+            "path",
+            "reduce",
+            "basic",
+            "RFC7405",
+            "RFC3261",
+            "RFC3966",
+            "RFC3986",
+            "RFC4566",
+            "module_code",
+            "RFC5322-no-obs"
+          ] do
         :ets.insert_new(
-          :ets, {t, ABNF.load_file("test/resources/#{t}.abnf")}
+          :ets,
+          {t, ABNF.load_file("test/resources/#{t}.abnf")}
         )
-        :timer.sleep 1
+
+        :timer.sleep(1)
       end
-      send me, :done
+
+      send(me, :done)
+
       receive do
         _ -> :ok
       end
-    end
+    end)
+
     receive do
       :done -> :ok
     end
+
     :ok
   end
 
   defp load(file) do
-    [{^file, grammar}] = :ets.lookup :ets, file
+    [{^file, grammar}] = :ets.lookup(:ets, file)
     grammar
   end
 end

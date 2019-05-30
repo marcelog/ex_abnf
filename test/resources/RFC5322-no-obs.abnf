@@ -47,13 +47,13 @@ date            =   day month year !!!
   {:ok, Map.put(state, :year, :lists.flatten(y))}
 !!!
 day             =   ([FWS] 1*2DIGIT FWS)  !!!
-  {:ok, state, to_char_list String.strip(to_string(rule))}
+  {:ok, state, to_charlist String.strip(to_string(rule))}
 !!!
 month           =   "Jan" / "Feb" / "Mar" / "Apr" /
                     "May" / "Jun" / "Jul" / "Aug" /
                     "Sep" / "Oct" / "Nov" / "Dec"
 year            =   (FWS 4*DIGIT FWS) !!!
-  {:ok, state, to_char_list String.strip(to_string(rule))}
+  {:ok, state, to_charlist String.strip(to_string(rule))}
 !!!
 time            =   time-of-day zone !!!
   [_, tz] = values
@@ -70,7 +70,7 @@ second          =   2DIGIT !!!
   {:ok, Map.put(state, :second, rule)}
 !!!
 zone            =   (FWS ( "+" / "-" ) 4DIGIT) !!!
-  {:ok, state, to_char_list String.strip(to_string(rule))}
+  {:ok, state, to_charlist String.strip(to_string(rule))}
 !!!
 address         =   mailbox / group
 mailbox         =   name-addr / addr-spec

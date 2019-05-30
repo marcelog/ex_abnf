@@ -18,12 +18,18 @@ defmodule ABNF.CaptureResult do
       limitations under the License.
   """
 
-  defstruct input: '', # original input before match
-    rest: '',          # text that didn't match
-    string_text: '',   # full text that matched
-    string_tokens: [], # contains string parts that matched (usually 1)
-    values: nil,       # real rule value
-    state: nil         # state after match
+  # original input before match
+  defstruct input: '',
+            # text that didn't match
+            rest: '',
+            # full text that matched
+            string_text: '',
+            # contains string parts that matched (usually 1)
+            string_tokens: [],
+            # real rule value
+            values: nil,
+            # state after match
+            state: nil
 
   @type t :: %ABNF.CaptureResult{}
 end
